@@ -33,5 +33,6 @@ CREATE TABLE `subreddits` (
   `createdAt` TIMESTAMP NOT NULL DEFAULT 0,
   `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`),
+  UNIQUE KEY `name` (`name`)
+);
   
