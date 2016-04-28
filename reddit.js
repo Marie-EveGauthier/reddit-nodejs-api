@@ -152,7 +152,7 @@ module.exports = function RedditAPI(conn) {
           }
           else {
             var resultsFormated = {
-              id: results[0].users_id,
+              userId: results[0].users_id,
               username: results[0].users_username,
               createdAt: results[0].users_createdAt,
               updatedAt: results[0].users_updated,
