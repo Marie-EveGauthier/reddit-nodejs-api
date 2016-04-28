@@ -151,22 +151,21 @@ module.exports = function RedditAPI(conn) {
             callback(err);
           }
           else {
-            var resultsFormated = results.map(function(res){
-              return {
+            var resultsFormated = {
+              id: results[0].users_id,
+              username: results[0].users_username,
+              createdAt: results[0].users_createdAt,
+              updatedAt: results[0].users_updated,
+              post: results.map(function(res) {
+                return {
                 id: res.post_id,
                 title: res.post_title,
                 url: res.post_url,
                 createdAt: res.post_createdAt,
                 updatedAt: res.post_updated,
-                userId: res.post_userId,
-                user: {
-                    id: res.users_id,
-                    username: res.users_username,
-                    createdAt: res.users_createdAt,
-                    updatedAt: res.users_updated
-                }       
-              };
-            });
+                };
+              })
+            };
             callback(null, resultsFormated);
           }
         }
