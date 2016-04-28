@@ -14,7 +14,7 @@ var reddit = require('./reddit');
 var redditAPI = reddit(connection);
 
 
-redditAPI.getAllPosts(function(err, result){
+redditAPI.getAllPostsForUser(1, function(err, result){
   if (err) {
         console.log(err);
       }
