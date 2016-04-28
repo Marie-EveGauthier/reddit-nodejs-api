@@ -14,7 +14,7 @@ var reddit = require('./reddit');
 var redditAPI = reddit(connection);
 
 
-redditAPI.getAllPostsForUser(1, function(err, result){
+redditAPI.getSinglePost(2, function(err, result){
   if (err) {
         console.log(err);
       }
@@ -22,6 +22,15 @@ redditAPI.getAllPostsForUser(1, function(err, result){
         console.log(result);
       }
 });
+
+// redditAPI.getAllPostsForUser(1, function(err, result){
+//   if (err) {
+//         console.log(err);
+//       }
+//       else {
+//         console.log(result);
+//       }
+// });
 // // It's request time!
 // redditAPI.createUser({
 //   username: 'hello23',

@@ -170,6 +170,31 @@ module.exports = function RedditAPI(conn) {
           }
         }
       );
+    },
+    getSinglePost(postId, callback) {
+      conn.query(
+      `SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated,
+      u.id AS users_id, u.username AS users_username
+      FROM posts p
+      JOIN users u ON p.userId=u.id
+      WHERE p.id=${postId}`
+      ,function(err, result) {
+        if (err) {
+          callback(err);
+        }
+        else {
+          callback(null, {
+            postId: result[0].post_id,
+            title: result[0].post_title,
+            url: result[0].post_url,
+            postCreatedAt: result[0].post_createdAt,
+            postUpdatedAt: result[0].post_updated,
+            userId: result[0].users_id,
+            username: result[0].users_username
+            });
+          }
+        }
+      );
     }
     
   };
