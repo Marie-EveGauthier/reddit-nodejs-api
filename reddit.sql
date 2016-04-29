@@ -23,6 +23,14 @@ CREATE TABLE `posts` (
   UNIQUE KEY `userId` (`userId`),
   CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+--This adds a subredditId column to the posts table.
+--The subredditId column references the id column of subreddits. 
+--If a subreddit is deleted, the corresponding posts' subredditIds will be set NULL.
+ALTER TABLE `posts` ADD COLUMN `subredditId` INT(11);
+ALTER TABLE `posts` ADD FOREIGN KEY (`subredditId`) REFERENCES `subreddits`(`id`) ON DELETE SET NULL;
+
+
+
 
 -- This creates the subreddits table. The name field is constrained to unique
 -- values only, by using a UNIQUE KEY on that column
@@ -36,12 +44,7 @@ CREATE TABLE `subreddits` (
   UNIQUE KEY `name` (`name`)
 );
   
---This add a subredditId column to the posts table.
---The subredditId column references the id column of subreddits. 
---If a subreddit is deleted, the corresponding posts' subredditIds will be set NULL.
-ALTER TABLE `posts` ADD COLUMN `subredditId` INT(11);
-ALTER TABLE `posts` ADD FOREIGN KEY (`subredditId`) REFERENCES `subreddits`(`id`) ON DELETE SET NULL;
-  
+
 
 --This creates the comments table. 
 --A top-level comment has parentId set to NULL

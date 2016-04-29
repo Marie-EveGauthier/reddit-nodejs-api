@@ -58,9 +58,9 @@ module.exports = function RedditAPI(conn) {
         }
       });
     },
-    createPost: function(post, subredditId, callback) {
+    createPost: function(post, callback) {
       conn.query(
-        'INSERT INTO `posts` (`userId`, `title`, `url`, `createdAt`, `subredditId`) VALUES (?, ?, ?, ?, ?)', [post.userId, post.title, post.url, null, subredditId.subredditId],
+        'INSERT INTO `posts` (`userId`, `title`, `url`, `createdAt`, `subredditId`) VALUES (?, ?, ?, ?, ?)', [post.userId, post.title, post.url, null, post.subredditId],
         function(err, result) {
           if (err) {
             callback(err);
@@ -266,6 +266,33 @@ It should return the list of all subreddits, ordered by the newly created one fi
               };
             });
             callback(null, resultsFormated);
+          }
+        }
+      );
+    },
+    createComment: function(comment, callback) {
+      conn.query(
+        'INSERT INTO `comments` (`text`, `userId`, `postId`, `parentId`, `createdAt`) VALUES (?, ?, ?, ?, ?)', [comment.text, comment.userId, comment.postId, comment.parentId, null],
+        function(err, result) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            /*
+            Comment inserted successfully. Let's use the result.insertId to retrieve
+            the comment and send it to the caller!
+            */
+            conn.query(
+              'SELECT `id`,`text`,`userId`, `postId`, `parentId`, `createdAt`, `updatedAt` FROM `comments` WHERE `id` = ?', [result.insertId],
+              function(err, result) {
+                if (err) {
+                  callback(err);
+                }
+                else {
+                  callback(null, result[0]);
+                }
+              }
+            );
           }
         }
       );

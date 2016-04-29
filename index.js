@@ -14,8 +14,13 @@ var reddit = require('./reddit');
 var redditAPI = reddit(connection);
 
 
-
-redditAPI.getAllPosts(function(err, result){
+//`text`, `userId`, `postId`, `parentId`,
+redditAPI.createComment({
+  text: 'third level comment',
+  userId: 1,
+  postId: 2,
+  parentId: 14
+}, function (err, result){
   if (err) {
       console.log(err);
     }
@@ -23,6 +28,16 @@ redditAPI.getAllPosts(function(err, result){
       console.log(result);
     }  
   });
+  
+
+// redditAPI.getAllPosts(function(err, result){
+//   if (err) {
+//       console.log(err);
+//     }
+//     else {
+//       console.log(result);
+//     }  
+//   });
   
 
 // redditAPI.createPost({
@@ -65,16 +80,16 @@ redditAPI.getAllPosts(function(err, result){
 // });
 // // It's request time!
 // redditAPI.createUser({
-//   username: 'hello23',
-//   password: 'xxx'
+//   username: 'martin',
+//   password: 'poiu'
 // }, function(err, user) {
 //   if (err) {
 //     console.log(err);
 //   }
 //   else {
 //     redditAPI.createPost({
-//       title: 'hi reddit!',
-//       url: 'https://www.reddit.com',
+//       title: 'Start with why',
+//       url: 'https://www.startwithwhy.com/',
 //       userId: user.id
 //     }, function(err, post) {
 //       if (err) {
