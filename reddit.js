@@ -95,10 +95,12 @@ module.exports = function RedditAPI(conn) {
       var offset = (options.page || 0) * limit;
       
       conn.query(`
-        SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, 
-                u.id AS users_id, u.username AS users_username, u.createdAt AS users_createdAt, u.updatedAt AS users_updated
+        SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
+                u.id AS users_id, u.username AS users_username, u.createdAt AS users_createdAt, u.updatedAt AS users_updated,
+                s.id AS subreddits_id, s.name AS subreddits_name, s.description AS subreddits_description, s.createdAt AS subreddits_createdAt, s.updatedAt AS subreddits_updatedAt
         FROM posts p
-        JOIN users u ON p.userId=u.id 
+        JOIN users u ON p.userId=u.id
+        JOIN subreddits s ON p.subredditId=s.id
         ORDER BY p.createdAt DESC
         LIMIT ? OFFSET ?
         `, [limit, offset],
@@ -109,18 +111,25 @@ module.exports = function RedditAPI(conn) {
           else {
             var resultsFormated = results.map(function(res){
               return {
-                id: res.post_id,
+                postId: res.post_id,
                 title: res.post_title,
                 url: res.post_url,
                 createdAt: res.post_createdAt,
                 updatedAt: res.post_updated,
                 userId: res.post_userId,
                 user: {
-                    id: res.users_id,
-                    username: res.users_username,
-                    createdAt: res.users_createdAt,
-                    updatedAt: res.users_updated
-                }       
+                  id: res.users_id,
+                  username: res.users_username,
+                  createdAt: res.users_createdAt,
+                  updatedAt: res.users_updated
+                },
+                subreddit: {
+                  id: res.subreddits_id,
+                  name: res.subreddits_name,
+                  description: res.subreddits_description, 
+                  createdAt: res.subreddits_createdAt,
+                  updatedAt: res.subreddits_updatedAt
+                }
               };
             });
             callback(null, resultsFormated);
@@ -128,7 +137,7 @@ module.exports = function RedditAPI(conn) {
         }
       );
     },
-    getAllPostsForUser(userId, options, callback) {
+    getAllPostsForUser: function(userId, options, callback) {
       // In case we are called without an options parameter, shift all the parameters manually
       if (!callback) {
         callback = options;
