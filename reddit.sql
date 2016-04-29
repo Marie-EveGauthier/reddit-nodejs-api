@@ -42,3 +42,28 @@ CREATE TABLE `subreddits` (
 ALTER TABLE `posts` ADD COLUMN `subredditId` INT(11);
 ALTER TABLE `posts` ADD FOREIGN KEY (`subredditId`) REFERENCES `subreddits`(`id`) ON DELETE SET NULL;
   
+
+--This creates the comments table. 
+--A top-level comment has parentId set to NULL
+CREATE TABLE `comments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT 0,
+  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `text` varchar(10000) NOT NULL,
+  `userId` int(11),
+  `postId` int(11),
+  `parentId` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
+
+--The userId column references the id column of users. 
+--If a user is deleted, the corresponding comments' userId will be set NULL.
+ALTER TABLE `comments` ADD FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE SET NULL;
+
+--The postId column references the id column of posts. 
+--If a post is deleted, the corresponding comments' postId will be set NULL.
+ALTER TABLE `comments` ADD FOREIGN KEY (`postId`) REFERENCES `posts`(`id`) ON DELETE SET NULL;
+
+--The parentId column references the id column of comments (i.e the parentId is the id of the comment it is replying to.) 
+--If a comment is deleted, the corresponding comments' parentId will be set NULL.
+ALTER TABLE `comments` ADD FOREIGN KEY (`parentId`) REFERENCES `comments`(`id`) ON DELETE SET NULL;
