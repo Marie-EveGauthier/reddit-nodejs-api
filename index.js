@@ -13,15 +13,23 @@ var connection = mysql.createConnection({
 var reddit = require('./reddit');
 var redditAPI = reddit(connection);
 
+  // redditAPI.getAllSubreddits(function(err, result) {
+  //   if (err) {
+  //     console.log(err);
+  //   }
+  //   else {
+  //     console.log(result);
+  //   }  
+  // });
 
-redditAPI.createSubreddit({'name': 'rue mullins', 'description': 'Where the neighborhood meets' }, function(err, result){
-  if (err) {
-        console.log(err);
-      }
-      else {
-        console.log(result);
-      }
-});
+  redditAPI.createSubreddit({'name': 'may' }, function(err, result){
+    if (err) {
+          console.log(err);
+        }
+        else {
+          console.log(result);
+        }
+  });
 
 // redditAPI.getAllPostsForUser(1, function(err, result){
 //   if (err) {

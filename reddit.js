@@ -198,10 +198,23 @@ module.exports = function RedditAPI(conn) {
     },
     createSubreddit: function(sub, callback) {
       conn.query(
-        'INSERT INTO `subreddits` (`name`, `description`) VALUES (?, ?)', [sub.name, sub.description],
+        'INSERT INTO `subreddits` (`name`, `description`, `createdAt`) VALUES (?, ?, ?)', [sub.name, sub.description, null],
         function(err, result) {
           if (err) {
             callback(err);
+          }
+          if (err) {
+            /*
+            There can be many reasons why a MySQL query could fail. While many of
+            them are unknown, there's a particular error about unique names
+            which we can be more explicit about!
+            */
+            if (err.code === 'ER_DUP_ENTRY') {
+              callback(new Error('A subreddit with this name already exists'));
+            }
+            else {
+              callback(err);
+            }
           }
           else {
             /*
@@ -219,6 +232,31 @@ module.exports = function RedditAPI(conn) {
                 }
               }
             );
+          }
+        }
+      );
+    },
+/*   add a getAllSubreddits(callback) function. 
+It should return the list of all subreddits, ordered by the newly created one first.
+*/
+    getAllSubreddits: function(callback) {
+      conn.query(`
+        SELECT s.id AS subreddits_id, s.name AS subreddits_name, s.description AS subreddits_description, s.createdAt AS subreddits_createdAt, s.updatedAt AS subreddits_updated
+        FROM subreddits s
+        ORDER BY s.createdAt DESC`,
+        function(err, results) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            var resultsFormated = results.map(function(res){
+              return {
+                id: res.subreddits_id,
+                name: res.subreddits_name,
+                description: res.subreddits_description,
+              };
+            });
+            callback(null, resultsFormated);
           }
         }
       );
