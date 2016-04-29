@@ -13,6 +13,20 @@ var connection = mysql.createConnection({
 var reddit = require('./reddit');
 var redditAPI = reddit(connection);
 
+
+
+redditAPI.createPost({
+  title: 'St-Charles Public Library ',
+  url: 'http://www.ville.montreal.qc.ca/culture/en/saint-charles-public-library',
+  userId: 1}, {subredditId: 4}, function(err, post) {
+  if (err) {
+    console.log(err);
+  }
+  else {
+    console.log(post);
+  }
+});
+
   // redditAPI.getAllSubreddits(function(err, result) {
   //   if (err) {
   //     console.log(err);
@@ -22,14 +36,14 @@ var redditAPI = reddit(connection);
   //   }  
   // });
 
-  redditAPI.createSubreddit({'name': 'may' }, function(err, result){
-    if (err) {
-          console.log(err);
-        }
-        else {
-          console.log(result);
-        }
-  });
+    // redditAPI.createSubreddit({'name': 'may' }, function(err, result){
+    //   if (err) {
+    //         console.log(err);
+    //       }
+    //       else {
+    //         console.log(result);
+    //       }
+    // });
 
 // redditAPI.getAllPostsForUser(1, function(err, result){
 //   if (err) {
