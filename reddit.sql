@@ -20,7 +20,7 @@ CREATE TABLE `posts` (
   `createdAt` TIMESTAMP NOT NULL DEFAULT 0,
   `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `userId` (`userId`),
+  UNIQUE KEY `userId` (`userId`),
   CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -35,4 +35,10 @@ CREATE TABLE `subreddits` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 );
+  
+--This add a subredditId column to the posts table.
+--The subredditId column references the id column of subreddits. 
+--If a subreddit is deleted, the corresponding posts' subredditIds will be set NULL.
+ALTER TABLE `posts` ADD COLUMN `subredditId` INT(11);
+ALTER TABLE `posts` ADD FOREIGN KEY (`subredditId`) REFERENCES `subreddits`(`id`) ON DELETE SET NULL;
   

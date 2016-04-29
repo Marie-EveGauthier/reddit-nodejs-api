@@ -14,7 +14,7 @@ var reddit = require('./reddit');
 var redditAPI = reddit(connection);
 
 
-redditAPI.getSinglePost(2, function(err, result){
+redditAPI.createSubreddit({'name': 'rue mullins', 'description': 'Where the neighborhood meets' }, function(err, result){
   if (err) {
         console.log(err);
       }

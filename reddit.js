@@ -195,7 +195,33 @@ module.exports = function RedditAPI(conn) {
           }
         }
       );
+    },
+    createSubreddit: function(sub, callback) {
+      conn.query(
+        'INSERT INTO `subreddits` (`name`, `description`) VALUES (?, ?)', [sub.name, sub.description],
+        function(err, result) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            /*
+            Subreddit inserted successfully. Let's use the result.insertId to retrieve
+            the post and send it to the caller!
+            */
+            conn.query(
+              'SELECT `name`,`description` FROM `subreddits` WHERE `id` = ?', [result.insertId],
+              function(err, result) {
+                if (err) {
+                  callback(err);
+                }
+                else {
+                  callback(null, result[0]);
+                }
+              }
+            );
+          }
+        }
+      );
     }
-    
   };
 };
