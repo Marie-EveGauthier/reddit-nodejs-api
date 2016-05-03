@@ -13,21 +13,102 @@ var connection = mysql.createConnection({
 var reddit = require('./reddit');
 var redditAPI = reddit(connection);
 
+//load the express library to create our web server
+var express = require('express');
+var app = express();
 
-//`text`, `userId`, `postId`, `parentId`,
-redditAPI.createComment({
-  text: 'third level comment',
-  userId: 1,
-  postId: 2,
-  parentId: 14
-}, function (err, result){
-  if (err) {
-      console.log(err);
+/*The homepage lists up to 25 posts, by default sorted by descending "hotness" (more on that later). 
+The homepage is accessible at the / resource path. 
+But in addition to showing the top 25 "hot" posts, 
+the homepage resource can take a query string parameter called sort that can have the following values:
+*/
+
+//This is the homepage
+app.get('/', function(request, response){
+  redditAPI.getAllPosts(function(err, posts){
+    
+    if (err) {
+        response.status(500).send('Ooops... something went wrong. Try again later');
     }
     else {
-      console.log(result);
+      var listedPost = posts.map(function(post) {
+        return  `<li>
+        <a href=${post.url}>${post.title}</a>
+        <p>Created by ${post.user.username}</p>
+        </li>`
+      }); 
+      response.send(`<div id="contents">
+        <h1>Welcome on reddit</h1>
+        <ul class="contents-list">
+          ${listedPost.join('')}
+        </ul>
+        </div>`);
     }  
   });
+});
+
+//This is the homepage with sort method
+app.get('/:sort', function(request, response){
+  var sort = request.params.sort;
+  redditAPI.getAllPosts(function(err, result){
+    
+    if (err) {
+        response.status(500).send('Ooops... something went wrong. Try again later');
+    }
+    else {
+    response.send(result);
+    }  
+  });
+});
+
+
+//This allows the web server to listen the requests
+app.listen(process.env.PORT);
+
+
+redditAPI.createOrUpdateVote({postId: 3, userId: 1, vote: 1}, function(err, result) {
+  if (err) {
+  console.log(err);
+  }
+  else {
+    console.log(result);
+  }
+});
+  
+
+
+// redditAPI.getTheFiveLatestPosts(function(err, result){
+// if (err) {
+//   console.log(err.stack);
+// }
+// else {
+//   console.log(result);
+// }
+// });
+
+// redditAPI.getCommentsForPost(2, function(err, result){
+// if (err) {
+//   console.log(err.stack);
+// }
+// else {
+//   console.log(result);
+// }
+// });
+
+
+// redditAPI.createComment({
+//   text: 'third level comment',
+//   userId: 1,
+//   postId: 2,
+//   parentId: 14
+// }, function (err, result){
+//   if (err) {
+//       console.log(err);
+//     }
+//     else {
+//       console.log(result);
+//     }  
+//   });
   
 
 // redditAPI.getAllPosts(function(err, result){
@@ -41,9 +122,11 @@ redditAPI.createComment({
   
 
 // redditAPI.createPost({
-//   title: 'St-Charles Public Library ',
-//   url: 'http://www.ville.montreal.qc.ca/culture/en/saint-charles-public-library',
-//   userId: 1}, {subredditId: 4}, function(err, post) {
+//   title: 'Why obsolescence programmee',
+//   url: 'https://whyopencomputing.ch/fr/',
+//   userId: 1, 
+//   subredditId: 1
+//   }, function(err, post) {
 //   if (err) {
 //     console.log(err);
 //   }

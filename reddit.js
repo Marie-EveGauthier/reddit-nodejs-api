@@ -180,7 +180,7 @@ module.exports = function RedditAPI(conn) {
         }
       );
     },
-    getSinglePost(postId, callback) {
+    getSinglePost: function(postId, callback) {
       conn.query(
       `SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated,
       u.id AS users_id, u.username AS users_username
@@ -245,9 +245,7 @@ module.exports = function RedditAPI(conn) {
         }
       );
     },
-/*   add a getAllSubreddits(callback) function. 
-It should return the list of all subreddits, ordered by the newly created one first.
-*/
+//This returns the list of all subreddits, ordered by the newly created one first.
     getAllSubreddits: function(callback) {
       conn.query(`
         SELECT s.id AS subreddits_id, s.name AS subreddits_name, s.description AS subreddits_description, s.createdAt AS subreddits_createdAt, s.updatedAt AS subreddits_updated
@@ -296,6 +294,111 @@ It should return the list of all subreddits, ordered by the newly created one fi
           }
         }
       );
-    }
+    },
+    getCommentsForPost: function(postId, callback) {
+      conn.query(`
+        SELECT c1.id AS c1_id, c1.text AS c1_text, c1.userId AS c1_userId, c1.createdAt AS c1_createdAt, c1.updatedAt AS c1_updatedsAt, c1.parentId AS c1_parentId,
+        c2.id AS c2_id, c2.text AS c2_text, c2.userId AS c2_userId, c2.createdAt AS c2_createdAt, c2.updatedAt AS c2_updatedsAt, c2.parentId AS c2_parentId,
+        c3.id AS c3_id, c3.text AS c3_text, c3.userId AS c3_userId, c3.createdAt AS c3_createdAt, c3.updatedAt AS c3_updatedsAt, c3.parentId AS c3_parentId
+        FROM comments c1
+        LEFT JOIN comments c2 ON c1.id=c2.parentId
+        LEFT JOIN comments c3 ON c2.id=c3.parentId
+        WHERE c1.postId =${postId} AND c1.parentId IS NULL`,
+        function(err, result) {
+                if (err) {
+                  callback(err);
+                }
+                else {
+                  var arrOfComments = [];
+                  var parentIdNull = result.filter(function(comment){
+                    if(result.c2_id === null){
+                      return true;
+                      //arrOfComments.push({id: comment.c1_id, text: comment.c1_text, createdAt: comment.c1_createdAt, updatedAt: comment.c1_updatedAt});
+                    }
+                    return arrOfComments;
+                    //else if () {
+                      
+                    //}
+                    
+                  });
+                  
+                  
+                  callback(null, result);
+                }
+        }
+      );
+  },
+  /* retrieve the latest 5 posts by createdAt date, including the username who created the content.
+  */
+  getTheFiveLatestPosts: function(callback) {
+      conn.query(`
+        SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
+                u.id AS users_id, u.username AS users_username, u.createdAt AS users_createdAt, u.updatedAt AS users_updated,
+                s.id AS subreddits_id, s.name AS subreddits_name, s.description AS subreddits_description, s.createdAt AS subreddits_createdAt, s.updatedAt AS subreddits_updatedAt
+        FROM posts p
+        JOIN users u ON p.userId=u.id
+        JOIN subreddits s ON p.subredditId=s.id
+        ORDER BY p.createdAt DESC
+        LIMIT 5`,
+        function(err, results) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            var resultsFormated = results.map(function(res){
+              return {
+                postId: res.post_id,
+                title: res.post_title,
+                url: res.post_url,
+                createdAt: res.post_createdAt,
+                updatedAt: res.post_updated,
+                userId: res.post_userId,
+                user: {
+                  id: res.users_id,
+                  username: res.users_username,
+                  createdAt: res.users_createdAt,
+                  updatedAt: res.users_updated
+                },
+                subreddit: {
+                  id: res.subreddits_id,
+                  name: res.subreddits_name,
+                  description: res.subreddits_description, 
+                  createdAt: res.subreddits_createdAt,
+                  updatedAt: res.subreddits_updatedAt
+                }
+              };
+            });
+            callback(null, resultsFormated);
+          }
+        }
+      );
+    },
+    /*
+    This function will take a vote object with postId, userId, vote. 
+    It makes sure that the three proprieties are given and  that the vote is either 1, 0 (to cancel a vote) or -1.
+    Otherwise it should reject the request.
+*/
+    createOrUpdateVote: function(vote, callback) {
+      console.log(vote);
+      if(!vote.vote || !vote.userId || !vote.postId) {
+        callback("You need to specify the postId and your userId and your vote");
+      }
+      else if(vote.vote > 1 || vote.vote < -1) {
+        callback("The vote is not valid");
+      }
+      else{
+        conn.query(`
+          INSERT INTO votes
+          SET postId=${vote.postId}, userId=${vote.userId}, vote=${vote.vote} ON DUPLICATE KEY UPDATE vote=${vote.vote};
+          `), function(err, results) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            console.log(results);
+          }
+        };
+      }
+  }
   };
 };

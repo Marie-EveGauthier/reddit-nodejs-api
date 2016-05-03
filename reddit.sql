@@ -28,7 +28,7 @@ CREATE TABLE `posts` (
 --If a subreddit is deleted, the corresponding posts' subredditIds will be set NULL.
 ALTER TABLE `posts` ADD COLUMN `subredditId` INT(11);
 ALTER TABLE `posts` ADD FOREIGN KEY (`subredditId`) REFERENCES `subreddits`(`id`) ON DELETE SET NULL;
-
+ALTER TABLE `posts` ADD COLUMN 
 
 
 
@@ -70,3 +70,21 @@ ALTER TABLE `comments` ADD FOREIGN KEY (`postId`) REFERENCES `posts`(`id`) ON DE
 --The parentId column references the id column of comments (i.e the parentId is the id of the comment it is replying to.) 
 --If a comment is deleted, the corresponding comments' parentId will be set NULL.
 ALTER TABLE `comments` ADD FOREIGN KEY (`parentId`) REFERENCES `comments`(`id`) ON DELETE SET NULL;
+
+--This creates the votes table. This is a join table between userId and postId.
+--In the vote column, the value of 1 signifies an upvote, and a value of -1 signifies a downvote 
+CREATE TABLE `votes` (
+  `userId` int(11), 
+  `postId` int(11), 
+  PRIMARY KEY (`userId`, `postId`),
+  `votes` TINYINT,
+  `createdAt` TIMESTAMP NOT NULL DEFAULT 0,
+  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+ALTER TABLE `votes` ADD FOREIGN KEY (`userId`) REFERENCES `users`(`id`);
+ALTER TABLE `votes` ADD FOREIGN KEY (`postId`) REFERENCES `posts`(`id`);
+
+
+
+
+
