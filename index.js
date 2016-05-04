@@ -23,9 +23,10 @@ But in addition to showing the top 25 "hot" posts,
 the homepage resource can take a query string parameter called sort that can have the following values:
 */
 
-//This is the homepage
+//This is the homepage.  We can adding it a sortingMethod (new, top, )
 app.get('/', function(request, response){
-  redditAPI.getAllPosts(function(err, posts){
+  
+  redditAPI.getAllPosts(request.query.sort, function(err, posts){
     
     if (err) {
         response.status(500).send('Ooops... something went wrong. Try again later');
@@ -33,8 +34,8 @@ app.get('/', function(request, response){
     else {
       var listedPost = posts.map(function(post) {
         return  `<li>
-        <a href=${post.url}>${post.title}</a>
-        <p>Created by ${post.user.username}</p>
+        <a href=${post.post_url}>${post.post_title}</a>
+        <p>Created by ${post.users_username}</p>
         </li>`
       }); 
       response.send(`<div id="contents">
@@ -47,33 +48,21 @@ app.get('/', function(request, response){
   });
 });
 
-//This is the homepage with sort method
-app.get('/:sort', function(request, response){
-  var sort = request.params.sort;
-  redditAPI.getAllPosts(function(err, result){
-    
-    if (err) {
-        response.status(500).send('Ooops... something went wrong. Try again later');
-    }
-    else {
-    response.send(result);
-    }  
-  });
-});
+
 
 
 //This allows the web server to listen the requests
 app.listen(process.env.PORT);
 
 
-redditAPI.createOrUpdateVote({postId: 3, userId: 1, vote: 1}, function(err, result) {
-  if (err) {
-  console.log(err);
-  }
-  else {
-    console.log(result);
-  }
-});
+// redditAPI.createOrUpdateVote({postId: 3, userId: 1, vote: 1}, function(err, result) {
+//   if (err) {
+//   console.log(err);
+//   }
+//   else {
+//     console.log(result);
+//   }
+// });
   
 
 

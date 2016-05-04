@@ -85,57 +85,64 @@ module.exports = function RedditAPI(conn) {
         }
       );
     },
-    getAllPosts: function(options, callback) {
-      // In case we are called without an options parameter, shift all the parameters manually
+    getAllPosts: function(sortingMethod, callback) {
+      if (!sortingMethod || sortingMethod === 'new') {
+      /*In case we are called without an options parameter, shift all the parameters manually
       if (!callback) {
         callback = options;
         options = {};
       }
       var limit = options.numPerPage || 25; // if options.numPerPage is "falsy" then use 25
       var offset = (options.page || 0) * limit;
+      */
       
+        conn.query(`
+          SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
+                  u.id AS users_id, u.username AS users_username
+          FROM posts p
+          JOIN users u ON p.userId=u.id
+          ORDER BY p.createdAt DESC
+          LIMIT 25
+          `,
+          function(err, results) {
+            if (err) {
+              callback(err);
+            }
+            else {
+              callback(null, results);
+            }
+          }
+        );
+      }
+      /*
+      As a first step, add a voteScore property to each post that you retrieve. 
+      Do this by JOINing the posts table with the votes table, 
+      and grouping by postId. Add a SUM on the vote column of the votes table, 
+      and give it an alias of voteScore.
+    */
+    else if (sortingMethod === 'top') {
       conn.query(`
-        SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
-                u.id AS users_id, u.username AS users_username, u.createdAt AS users_createdAt, u.updatedAt AS users_updated,
-                s.id AS subreddits_id, s.name AS subreddits_name, s.description AS subreddits_description, s.createdAt AS subreddits_createdAt, s.updatedAt AS subreddits_updatedAt
-        FROM posts p
-        JOIN users u ON p.userId=u.id
-        JOIN subreddits s ON p.subredditId=s.id
-        ORDER BY p.createdAt DESC
-        LIMIT ? OFFSET ?
-        `, [limit, offset],
-        function(err, results) {
-          if (err) {
-            callback(err);
+          SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
+          u.id AS users_id, u.username AS users_username,
+          SUM(v.vote) AS voteScore       
+          FROM posts p
+          JOIN votes v ON v.postId=p.id 
+          JOIN users u ON p.userId=u.id
+          GROUP BY p.id
+          ORDER BY p.createdAt DESC
+          LIMIT 25\G
+          `,
+          function(err, results) {
+            if (err) {
+              callback(err);
+            }
+            else {
+              callback(null, results);
+            }
           }
-          else {
-            var resultsFormated = results.map(function(res){
-              return {
-                postId: res.post_id,
-                title: res.post_title,
-                url: res.post_url,
-                createdAt: res.post_createdAt,
-                updatedAt: res.post_updated,
-                userId: res.post_userId,
-                user: {
-                  id: res.users_id,
-                  username: res.users_username,
-                  createdAt: res.users_createdAt,
-                  updatedAt: res.users_updated
-                },
-                subreddit: {
-                  id: res.subreddits_id,
-                  name: res.subreddits_name,
-                  description: res.subreddits_description, 
-                  createdAt: res.subreddits_createdAt,
-                  updatedAt: res.subreddits_updatedAt
-                }
-              };
-            });
-            callback(null, resultsFormated);
-          }
-        }
-      );
+        );
+      
+    }
     },
     getAllPostsForUser: function(userId, options, callback) {
       // In case we are called without an options parameter, shift all the parameters manually
