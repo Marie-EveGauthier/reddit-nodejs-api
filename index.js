@@ -49,7 +49,9 @@ app.get('/', function(request, response){
         </ul>
         </div>
         <div id="signup-log">
-          <button id="signup" type=submit>Sign up</button>
+          <form method="get" action="signup">
+            <button id="signup" type=submit>Sign up</button>
+          </form>
         </div>`);
     }  
   });
@@ -100,6 +102,19 @@ app.get('/posts/:ID', function(request, response){
   });
 });
 
+
+//This is the signup page
+app.get('/signup', function(request, response){
+  response.sendFile(path.join(__dirname + '/signupForm.html'), function(err){
+    if (err) {
+      console.log(err);
+      response.status(err.status).end();
+    }
+    else {
+      console.log('Sent:', (path.join(__dirname + '/signupForm.html')));
+    }
+  });
+});
 
 //This allows the web server to listen the requests
 app.listen(process.env.PORT);
