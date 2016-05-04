@@ -129,8 +129,8 @@ module.exports = function RedditAPI(conn) {
           JOIN votes v ON v.postId=p.id 
           JOIN users u ON p.userId=u.id
           GROUP BY p.id
-          ORDER BY p.createdAt DESC
-          LIMIT 25\G
+          ORDER BY voteScore DESC
+          LIMIT 25
           `,
           function(err, results) {
             if (err) {
@@ -142,7 +142,7 @@ module.exports = function RedditAPI(conn) {
           }
         );
       
-    }
+      }
     },
     getAllPostsForUser: function(userId, options, callback) {
       // In case we are called without an options parameter, shift all the parameters manually
