@@ -60,7 +60,7 @@ module.exports = function RedditAPI(conn) {
     },
     createPost: function(post, callback) {
       conn.query(
-        'INSERT INTO `posts` (`userId`, `title`, `url`, `createdAt`, `subredditId`) VALUES (?, ?, ?, ?, ?)', [post.userId, post.title, post.url, null, post.subredditId],
+        'INSERT INTO `posts` (`userId`, `title`, `url`, `createdAt`) VALUES (?, ?, ?, ?)', [1, post.title, post.url, null],
         function(err, result) {
           if (err) {
             callback(err);
@@ -71,7 +71,7 @@ module.exports = function RedditAPI(conn) {
             the post and send it to the caller!
             */
             conn.query(
-              'SELECT `id`,`title`,`url`,`userId`, `createdAt`, `updatedAt`, `subredditId` FROM `posts` WHERE `id` = ?', [result.insertId],
+              'SELECT `id`,`title`,`url`,`userId`, `createdAt`, `updatedAt` FROM `posts` WHERE `id` = ?', [result.insertId],
               function(err, result) {
                 if (err) {
                   callback(err);
@@ -115,10 +115,9 @@ module.exports = function RedditAPI(conn) {
         );
       }
       /*
-      As a first step, add a voteScore property to each post that you retrieve. 
-      Do this by JOINing the posts table with the votes table, 
-      and grouping by postId. Add a SUM on the vote column of the votes table, 
-      and give it an alias of voteScore.
+      With sortingMethod equal to top, we join the posts table and the vote tables.
+      This way,we create a new column called voteScore that is the SUM of all the votes. 
+      By ordering the select post by the value of this voteScore column descending, we obtain the "top" posts first.
     */
     else if (sortingMethod === 'top') {
       conn.query(`
@@ -141,7 +140,29 @@ module.exports = function RedditAPI(conn) {
             }
           }
         );
-      
+      }
+      else if (sortingMethod === "hot") {
+        conn.query(`
+          SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
+          u.id AS users_id, u.username AS users_username,
+          SUM(v.vote), 
+          SUM(v.vote) / TIMEDIFF(NOW(),p.createdAt) AS hotnessScore    
+          FROM posts p
+          JOIN votes v ON v.postId=p.id 
+          JOIN users u ON p.userId=u.id
+          GROUP BY p.id
+          ORDER BY hotnessScore DESC
+          LIMIT 25
+          `,
+          function(err, results) {
+            if (err) {
+              callback(err);
+            }
+            else {
+              callback(null, results);
+            }
+          }
+        );
       }
     },
     getAllPostsForUser: function(userId, options, callback) {

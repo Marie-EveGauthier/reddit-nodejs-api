@@ -17,13 +17,17 @@ var redditAPI = reddit(connection);
 var express = require('express');
 var app = express();
 
-/*The homepage lists up to 25 posts, by default sorted by descending "hotness" (more on that later). 
-The homepage is accessible at the / resource path. 
-But in addition to showing the top 25 "hot" posts, 
-the homepage resource can take a query string parameter called sort that can have the following values:
-*/
+//Here we load the body-parser library and configure express to use body-parser as middleware.
+var bodyParser = require('body-parser');
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
-//This is the homepage.  We can adding it a sortingMethod (new, top, )
+//load the path library
+var path = require('path');
+
+/*This is the homepage. It lists up to 25 posts, by default sorted by the newest.
+The homepage resource can take a query string parameter called sort that can have the following values: new, top, hot
+*/
 app.get('/', function(request, response){
   
   redditAPI.getAllPosts(request.query.sort, function(err, posts){
@@ -43,12 +47,58 @@ app.get('/', function(request, response){
         <ul class="contents-list">
           ${listedPost.join('')}
         </ul>
+        </div>
+        <div id="signup-log">
+          <button id="signup" type=submit>Sign up</button>
         </div>`);
     }  
   });
 });
 
+//This is the create post page
+app.get('/createPostPage', function(request, response) {
+  response.sendFile(path.join(__dirname + '/postPageForm.html'), function(err){
+    if (err) {
+      console.log(err);
+      response.status(err.status).end();
+    }
+    else {
+      console.log('Sent:', (path.join(__dirname + '/postPageForm.html')));
+    }
+  });
+});
+    
+//Receiving data from our postPageform
+//We grab POST parameters using req.body.variable_name to insert the data of this new post in the database 
 
+app.post('/createPostPage', function(request, response){
+  var url = request.body.url;
+  var title = request.body.title;
+  redditAPI.createPost(request.body, function(err, post){
+    if (err) {
+      response.status(500).send('Ooops... something went wrong. Try again later--createPostPage');
+    }
+    else {
+      //This will redirect the user to the newly created posts according to its id
+      response.redirect(`/posts/${post.id}`);  
+    }  
+  });
+});
+
+//This shows the post according to the id given as parameter in the url
+app.get('/posts/:ID', function(request, response){
+  redditAPI.getSinglePost(request.params.ID, function(err, posts){
+    if (err) {
+      response.status(500).send('Ooops... something went wrong. Try again later--post/:ID');
+    }
+    else {
+      response.send(`<div id="postPage">
+      <a href=${posts.url}><h1>${posts.title}</h1></a>
+      <p>Created by ${posts.username}</p>
+      </div>`);
+    }
+  });
+});
 
 
 //This allows the web server to listen the requests
