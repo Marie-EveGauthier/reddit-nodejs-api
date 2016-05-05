@@ -34,7 +34,7 @@ module.exports = function RedditAPI(conn) {
                 and return it
                 */
                 conn.query(
-                  'SELECT `id`, `username`, `createdAt`, `updatedAt` FROM `users` WHERE `id` = ?', [result.insertId],
+                  'SELECT `id`, `username`, `password`, `createdAt`, `updatedAt` FROM `users` WHERE `id` = ?', [result.insertId],
                   function(err, result) {
                     if (err) {
                       callback(err);
@@ -419,14 +419,45 @@ module.exports = function RedditAPI(conn) {
           INSERT INTO votes
           SET postId=${vote.postId}, userId=${vote.userId}, vote=${vote.vote} ON DUPLICATE KEY UPDATE vote=${vote.vote};
           `), function(err, results) {
-          if (err) {
-            callback(err);
-          }
-          else {
-            console.log(results);
-          }
-        };
+            if (err) {
+              callback(err);
+            }
+            else {
+              console.log(results);
+            }
+          };
       }
+    },
+/*Our checkLogin function: 
+a. Takes a username, password and callback 
+b. Does an SQL request to our database like SELECT * FROM users WHERE username = ? 
+c. After retrieving the SQL result, uses bcrypt.compare function to check if it matches the input password 
+d. If the passwords match, the function calls back perhaps the full user object 
+e. If the passwords don't match, the function can callback with an error
+*/
+    checkLogin: function(username, password, callback){
+      conn.query(`SELECT * FROM users WHERE username=?`, [username], function(err, result){
+        if(err){
+          callback(err);
+        }
+        else{
+            if (result.length === 0) {
+              callback(new Error('username or password incorrect')); // in this case the user does not exists
+            }
+            else {
+            var user = result[0];
+            var actualHashedPassword = user.password;
+            bcrypt.compare(password, actualHashedPassword, function(err, result) {
+              if(result === true) { // let's be extra safe here
+                callback(null, user);
+              }
+              else {
+                callback(new Error('username or password incorrect')); // in this case the password is wrong, but we reply with the same error
+              }
+            });
+          }
+        }
+      })
+    }
   }
-  };
 };

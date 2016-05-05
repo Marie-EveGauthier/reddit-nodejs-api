@@ -25,6 +25,8 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 //load the path library
 var path = require('path');
 
+
+
 /*This is the homepage. It lists up to 25 posts, by default sorted by the newest.
 The homepage resource can take a query string parameter called sort that can have the following values: new, top, hot
 */
@@ -51,6 +53,9 @@ app.get('/', function(request, response){
         <div id="signup-log">
           <form method="get" action="signup">
             <button id="signup" type=submit>Sign up</button>
+          </form>
+          <form method="get" action="login">
+            <button id="login" type=submit>Login</button>
           </form>
         </div>`);
     }  
@@ -114,6 +119,58 @@ app.get('/signup', function(request, response){
       console.log('Sent:', (path.join(__dirname + '/signupForm.html')));
     }
   });
+});
+//Receiving data from our signup page
+//We grab POST parameters using req.body.variable_name to insert the data of this new user in the database 
+app.post('/signup', function(request, response){
+  var username = request.body.username;
+  var password = request.body.password;
+  if (password === '') {
+    response.send('You must have a password');
+  }
+  else {
+    redditAPI.createUser(request.body, function(err, user){
+      if (err) {
+        response.send(err.message);
+      }
+      else {
+      //This will redirect the user to the login page 
+        response.redirect(`/login`);  
+      }
+    });  
+  }
+});
+
+//This it the login page
+app.get('/login', function(request, response){
+  response.sendFile(path.join(__dirname + '/loginForm.html'), function(err){
+    if (err) {
+      console.log(err);
+      response.status(err.status).end();
+    }
+    else{
+      console.log('Sent:', (path.join(__dirname + '/loginForm.html')));
+    }
+  });
+});
+//Receiving data from our login page
+//We grab POST parameters using req.body.variable_name to login the user 
+app.post(`/login`, function(request, response){
+  var username = request.body.username;
+  var password = request.body.password;
+  if(username === '' || password === '') {
+    response.send('You must provide an username and/or password');
+  }
+  else {
+    redditAPI.checkLogin(username, password, function(err, userLoggedIn){
+      if (err) {
+        response.send(err.message);
+      }
+      else {
+        response.redirect('/');
+      }
+    });
+  }
 });
 
 //This allows the web server to listen the requests
