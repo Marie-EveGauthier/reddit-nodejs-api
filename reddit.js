@@ -1,5 +1,13 @@
+//load the bcrypt library to can hash the password
 var bcrypt = require('bcrypt');
 var HASH_ROUNDS = 10;
+
+//load the secureRandom library that will allows us to use a big random string as session token for the cookie
+var secureRandom = require('secure-random');
+// this function creates a big random string
+function createSessionToken() {
+  return secureRandom.randomArray(100).map(code => code.toString(36)).join('');
+}
 
 module.exports = function RedditAPI(conn) {
   return {
@@ -428,12 +436,10 @@ module.exports = function RedditAPI(conn) {
           };
       }
     },
-/*Our checkLogin function: 
-a. Takes a username, password and callback 
-b. Does an SQL request to our database like SELECT * FROM users WHERE username = ? 
-c. After retrieving the SQL result, uses bcrypt.compare function to check if it matches the input password 
-d. If the passwords match, the function calls back perhaps the full user object 
-e. If the passwords don't match, the function can callback with an error
+/*This checkLogin function queries the database to verify if the input (username and password) matches to the data.
+As the password is hashed, we have to use bcrypt.compare function.
+If the data doesn't match, the function can callback with an error.
+Otherwise, 
 */
     checkLogin: function(username, password, callback){
       conn.query(`SELECT * FROM users WHERE username=?`, [username], function(err, result){
@@ -457,7 +463,21 @@ e. If the passwords don't match, the function can callback with an error
             });
           }
         }
-      })
+      });
+    },
+//This function uses the big random number generated calling createSessiontoken and then store it in the sessions table with the userId  
+    createSession: function(userId, callback) {
+      var token = createSessionToken();
+      conn.query(`
+      INSERT INTO sessions SET userId = ?, sessionToken = ?`, [userId, token], 
+      function(err, result) {
+        if (err) {
+        callback(err);
+        }
+        else {
+          callback(null, token); // this is the secret session token :)
+        }
+      });
     }
-  }
+  };
 };

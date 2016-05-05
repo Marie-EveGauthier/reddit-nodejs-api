@@ -25,6 +25,13 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 //load the path library
 var path = require('path');
 
+//load the cookie-parser library and configure express to use it as middleware
+var cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
+
+
+
 
 
 /*This is the homepage. It lists up to 25 posts, by default sorted by the newest.
@@ -155,6 +162,9 @@ app.get('/login', function(request, response){
 });
 //Receiving data from our login page
 //We grab POST parameters using req.body.variable_name to login the user 
+/*We verify if the password matches with the username, 
+if it's the case, we create a token and send it to the user in his cookies
+*/
 app.post(`/login`, function(request, response){
   var username = request.body.username;
   var password = request.body.password;
@@ -164,10 +174,19 @@ app.post(`/login`, function(request, response){
   else {
     redditAPI.checkLogin(username, password, function(err, userLoggedIn){
       if (err) {
-        response.send(err.message);
+        response.status(401).send(err.message);
       }
       else {
-        response.redirect('/');
+        //password matches with username 
+        redditAPI.createSession(userLoggedIn.id, function(err, result){
+          if (err) {
+          response.status(500).send('An error occurred. Please try again later!');
+          }
+          else {
+            response.cookie('SESSION', result.token); // the secret token is now in the user's cookies!
+            response.redirect('/login');
+          }
+        });
       }
     });
   }

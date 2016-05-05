@@ -84,7 +84,11 @@ CREATE TABLE `votes` (
 ALTER TABLE `votes` ADD FOREIGN KEY (`userId`) REFERENCES `users`(`id`);
 ALTER TABLE `votes` ADD FOREIGN KEY (`postId`) REFERENCES `posts`(`id`);
 
-
-
+--This creates a sessions table. We will populate it each team a user successfully logs in.
+CREATE TABLE `sessions` (
+  `sessionToken` varchar(255) NOT NULL,
+  `userId` int(11) NOT NULL
+);
+ALTER TABLE `sessions` ADD FOREIGN KEY (userId) REFERENCES `users`(`id`);
 
 
