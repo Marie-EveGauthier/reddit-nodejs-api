@@ -436,10 +436,10 @@ module.exports = function RedditAPI(conn) {
           };
       }
     },
-/*This checkLogin function queries the database to verify if the input (username and password) matches to the data.
+/*This checkLogin function queries the database to verify if the input (username and password) matches.
 As the password is hashed, we have to use bcrypt.compare function.
-If the data doesn't match, the function can callback with an error.
-Otherwise, 
+If the data doesn't match, the function callback with an error.
+Otherwise, the function callbacks with the user
 */
     checkLogin: function(username, password, callback){
       conn.query(`SELECT * FROM users WHERE username=?`, [username], function(err, result){
@@ -448,7 +448,7 @@ Otherwise,
         }
         else{
             if (result.length === 0) {
-              callback(new Error('username or password incorrect')); // in this case the user does not exists
+              callback(new Error('username or password incorrect')); // in this case the user doesn't exist
             }
             else {
             var user = result[0];
@@ -471,11 +471,25 @@ Otherwise,
       conn.query(`
       INSERT INTO sessions SET userId = ?, sessionToken = ?`, [userId, token], 
       function(err, result) {
+        console.log(token, "this is the token");
         if (err) {
         callback(err);
         }
         else {
           callback(null, token); // this is the secret session token :)
+        }
+      });
+    },
+    // This function checks what is the userId associated to the sessionToken in the database.If it finds it, it callbacks it
+    getUserFromSession: function(sessionToken, callback) {
+      conn.query(`
+      SELECT * FROM sessions WHERE sessionToken = ?`, [sessionToken],
+      function(err, result) {
+        if (err) {
+          callback(err);
+        }
+        else {
+          callback(null, result);
         }
       });
     }

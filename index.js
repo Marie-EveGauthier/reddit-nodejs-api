@@ -25,10 +25,50 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 //load the path library
 var path = require('path');
 
-//load the cookie-parser library and configure express to use it as middleware
+//load the cookie-parser library and configure express to use it as middleware. 
+/*this middleware will add a `cookies` property to the request, 
+an object of key:value pairs for all the cookies we set
+*/
 var cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
+
+/*This function checks the request cookies for a cookie called SESSION
+If it does not exist, call next() to exit the middleware
+If exists, call the getUserFromSession to find the userId associated
+and set it to a loggedInUser property on the request object.
+This way each request handler can pick it up and do what it wants with it.
+*/
+function checkLoginToken(request, response, next) {
+  //check if there's a SESSION cookie...
+  if(request.cookies.SESSION) {
+    redditAPI.getUserFromSession(request.cookies.SESSION, function(err, user) {
+      if (user) {
+        request.loggedInUser = user.userId;
+      }
+      next();
+    });
+  }
+  else {
+    // if no SESSION cookie, move forward
+    next();
+  }
+}  
+
+// Adding the middleware to our express stack.
+app.use(checkLoginToken)
+
+/*
+Let's create a middleware that will run on every request. Here's how our middleware will work:
+
+Check the request cookies for a cookie called SESSION
+If it does not exist, call next() to exit the middleware
+If the cookie exists, do a database query to see if the session token belongs to a user:
+
+if it doesn't, then call next() again (here we could also "delete" the cookie)
+if it does, then we can set a loggedInUser property on the request object. This way each request handler can pick it up and do what it wants with it.
+
+*/
 
 
 
@@ -178,19 +218,21 @@ app.post(`/login`, function(request, response){
       }
       else {
         //password matches with username 
-        redditAPI.createSession(userLoggedIn.id, function(err, result){
+        redditAPI.createSession(userLoggedIn.id, function(err, token){
           if (err) {
           response.status(500).send('An error occurred. Please try again later!');
           }
           else {
-            response.cookie('SESSION', result.token); // the secret token is now in the user's cookies!
-            response.redirect('/login');
+            response.cookie('SESSION', token); // the secret token is now in the user's cookies!
+            response.redirect('/');
           }
         });
       }
     });
   }
 });
+
+
 
 //This allows the web server to listen the requests
 app.listen(process.env.PORT);
