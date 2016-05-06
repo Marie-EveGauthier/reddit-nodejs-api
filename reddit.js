@@ -66,32 +66,37 @@ module.exports = function RedditAPI(conn) {
         }
       });
     },
-    createPost: function(post, callback) {
-      conn.query(
-        'INSERT INTO `posts` (`userId`, `title`, `url`, `createdAt`) VALUES (?, ?, ?, ?)', [1, post.title, post.url, null],
-        function(err, result) {
-          if (err) {
-            callback(err);
-          }
-          else {
-            /*
-            Post inserted successfully. Let's use the result.insertId to retrieve
-            the post and send it to the caller!
-            */
-            conn.query(
-              'SELECT `id`,`title`,`url`,`userId`, `createdAt`, `updatedAt` FROM `posts` WHERE `id` = ?', [result.insertId],
-              function(err, result) {
-                if (err) {
-                  callback(err);
+    createPost: function(post, userId, callback) {
+      if(post.url === '' || post.title === '') {
+        callback(new Error('You need to specify the title and/or the url'))
+      }
+      else {
+        conn.query(
+          'INSERT INTO `posts` (`userId`, `title`, `url`, `createdAt`) VALUES (?, ?, ?, ?)', [userId, post.title, post.url, null],
+          function(err, result) {
+            if (err) {
+              callback(err);
+            }
+            else {
+              /*
+              Post inserted successfully. Let's use the result.insertId to retrieve
+              the post and send it to the caller!
+              */
+              conn.query(
+                'SELECT `id`,`title`,`url`,`userId`, `createdAt`, `updatedAt` FROM `posts` WHERE `id` = ?', [result.insertId],
+                function(err, result) {
+                  if (err) {
+                    callback(err);
+                  }
+                  else {
+                    callback(null, result[0]);
+                  }
                 }
-                else {
-                  callback(null, result[0]);
-                }
-              }
-            );
+              );
+            }
           }
-        }
-      );
+        );
+      }
     },
     getAllPosts: function(sortingMethod, callback) {
       if (!sortingMethod || sortingMethod === 'new') {
@@ -437,12 +442,13 @@ module.exports = function RedditAPI(conn) {
       }
     },
 /*This checkLogin function queries the database to verify if the input (username and password) matches.
-As the password is hashed, we have to use bcrypt.compare function.
-If the data doesn't match, the function callback with an error.
-Otherwise, the function callbacks with the user
+As the password is hashed, we have to use bcrypt.compare function. 
+If it returns false, that means the data doesn't match and then, the function callback with an error.
+Otherwise, It will return true because the data matches. So, the function callbacks with the user
 */
     checkLogin: function(username, password, callback){
-      conn.query(`SELECT * FROM users WHERE username=?`, [username], function(err, result){
+      conn.query(`SELECT * FROM users WHERE username=?`, [username], 
+      function(err, result){
         if(err){
           callback(err);
         }
@@ -451,8 +457,9 @@ Otherwise, the function callbacks with the user
               callback(new Error('username or password incorrect')); // in this case the user doesn't exist
             }
             else {
-            var user = result[0];
+            var user= result[0];
             var actualHashedPassword = user.password;
+            //
             bcrypt.compare(password, actualHashedPassword, function(err, result) {
               if(result === true) { // let's be extra safe here
                 callback(null, user);
@@ -471,7 +478,6 @@ Otherwise, the function callbacks with the user
       conn.query(`
       INSERT INTO sessions SET userId = ?, sessionToken = ?`, [userId, token], 
       function(err, result) {
-        console.log(token, "this is the token");
         if (err) {
         callback(err);
         }
@@ -480,7 +486,7 @@ Otherwise, the function callbacks with the user
         }
       });
     },
-    // This function checks what is the userId associated to the sessionToken in the database.If it finds it, it callbacks it
+    // This function checks if there is an userId associated to the sessionToken in the database.If it finds it, it callbacks it
     getUserFromSession: function(sessionToken, callback) {
       conn.query(`
       SELECT * FROM sessions WHERE sessionToken = ?`, [sessionToken],
@@ -489,6 +495,7 @@ Otherwise, the function callbacks with the user
           callback(err);
         }
         else {
+          //result is an array with an objet looking like this: {sessionToken: xxx , userId: xxx} 
           callback(null, result);
         }
       });

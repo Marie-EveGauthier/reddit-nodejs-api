@@ -29,7 +29,8 @@ CREATE TABLE `posts` (
 ALTER TABLE `posts` ADD COLUMN `subredditId` INT(11);
 ALTER TABLE `posts` ADD FOREIGN KEY (`subredditId`) REFERENCES `subreddits`(`id`) ON DELETE SET NULL;
 ALTER TABLE `posts` ADD COLUMN 
-
+ALTER TABLE posts MODIFY url  varchar (300) NOT NULL;   
+ALTER TABLE posts MODIFY title  varchar (300) NOT NULL;  
 
 
 -- This creates the subreddits table. The name field is constrained to unique
