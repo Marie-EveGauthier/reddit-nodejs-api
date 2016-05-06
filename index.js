@@ -25,6 +25,11 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 //load the path library
 var path = require('path');
 
+//load the moment library to can play with the date and hours
+var moment = require('moment');
+moment().format();
+
+
 //load the cookie-parser library and configure express to use it as middleware. 
 /*this middleware will add a `cookies` property to the request, 
 an object of key:value pairs for all the cookies we set
@@ -73,16 +78,19 @@ app.get('/', function(request, response){
     }
     else {
       var listedPost = posts.map(function(post) {
-        var score = post.voteScore
+        var score = post.voteScore;
+        console.log(post)
+        var timeSinceCreated = moment(post.post_createdAt).fromNow();
         return  `<li>
         <a href='/posts/${post.post_id}'>${post.post_title}</a>
         <p>Created by ${post.users_username}</p>
+        <p>${timeSinceCreated}</p>
         <form action='/vote' method='post'>
           <input type='hidden' name='vote' value='1'>
           <input type='hidden' name='postId' value='${post.post_id}'>
           <button type='submit'>upvote this</button>
         </form>
-        <p>${score}</p>
+        <p>${!score ? 0 : score}</p>
         <form action='/vote' method='post'>
           <input type='hidden' name='vote' value='-1'>
           <input type='hidden' name='postId' value='${post.post_id}'>
