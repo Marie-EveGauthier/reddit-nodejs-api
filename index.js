@@ -68,12 +68,12 @@ The homepage resource can take a query string parameter called sort that can hav
 app.get('/', function(request, response){
   
   redditAPI.getAllPosts(request.query.sort, function(err, posts){
-    
     if (err) {
         response.status(500).send('Ooops... something went wrong. Try again later');
     }
     else {
       var listedPost = posts.map(function(post) {
+        var score = post.voteScore
         return  `<li>
         <a href='/posts/${post.post_id}'>${post.post_title}</a>
         <p>Created by ${post.users_username}</p>
@@ -82,6 +82,7 @@ app.get('/', function(request, response){
           <input type='hidden' name='postId' value='${post.post_id}'>
           <button type='submit'>upvote this</button>
         </form>
+        <p>${score}</p>
         <form action='/vote' method='post'>
           <input type='hidden' name='vote' value='-1'>
           <input type='hidden' name='postId' value='${post.post_id}'>
@@ -106,6 +107,20 @@ app.get('/', function(request, response){
     }  
   });
 });
+
+//------This receive the vote and calling the redditAPI.createOrUpdatedVote function passes the data for the database
+app.post('/vote', function(request, response){
+  redditAPI.createOrUpdateVote(request.body, request.loggedInUser, function(err, result){
+    if (err) {
+        response.status(500).send('Ooops... something went wrong. Try again later');
+      }
+      else {
+        //This will redirect the user where he comes from 
+        response.redirect(`back`);  
+      }  
+  });
+});
+
 
 //---------------This is the create post page
 app.get('/createPostPage', function(request, response) {

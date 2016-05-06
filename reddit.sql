@@ -84,6 +84,8 @@ CREATE TABLE `votes` (
 );
 ALTER TABLE `votes` ADD FOREIGN KEY (`userId`) REFERENCES `users`(`id`);
 ALTER TABLE `votes` ADD FOREIGN KEY (`postId`) REFERENCES `posts`(`id`);
+ALTER TABLE `votes` MODIFY vote  TINYINT (4) NOT NULL DEFAULT 0;  
+
 
 --This creates a sessions table. We will populate it each team a user successfully logs in.
 CREATE TABLE `sessions` (

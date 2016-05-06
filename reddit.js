@@ -111,9 +111,12 @@ module.exports = function RedditAPI(conn) {
       
         conn.query(`
           SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
-                  u.id AS users_id, u.username AS users_username
+                  u.id AS users_id, u.username AS users_username,
+                  SUM(if(v.vote > 0, 1, 0)) AS upvotes, SUM(if(v.vote < 0, -1, 0)) AS downvotes, SUM(v.vote) AS voteScore
           FROM posts p
           JOIN users u ON p.userId=u.id
+          LEFT JOIN votes v ON v.postId=p.id
+          GROUP BY p.id
           ORDER BY p.createdAt DESC
           LIMIT 25
           `,
@@ -154,7 +157,7 @@ module.exports = function RedditAPI(conn) {
           }
         );
       }
-      else if (sortingMethod === "hot") {
+      else if (sortingMethod === 'hot') {
         conn.query(`
           SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
           u.id AS users_id, u.username AS users_username,
@@ -176,6 +179,11 @@ module.exports = function RedditAPI(conn) {
             }
           }
         );
+      }
+      else if (sortingMethod === 'controversial'){
+      /*Controversial ranking: = numUpvotes < numDownvotes ? totalVotes * (numUpvotes / numDownvotes) : totalVotes * (numDownvotes / numUpvotes) 
+      we can filter out posts that have few votes (< 100) since they may not be meaningful.
+      */
       }
     },
     getAllPostsForUser: function(userId, options, callback) {
@@ -419,27 +427,21 @@ module.exports = function RedditAPI(conn) {
     It makes sure that the three proprieties are given and  that the vote is either 1, 0 (to cancel a vote) or -1.
     Otherwise it should reject the request.
 */
-    createOrUpdateVote: function(vote, callback) {
-      console.log(vote);
-      if(!vote.vote || !vote.userId || !vote.postId) {
-        callback("You need to specify the postId and your userId and your vote");
-      }
-      else if(vote.vote > 1 || vote.vote < -1) {
-        callback("The vote is not valid");
-      }
-      else{
-        conn.query(`
-          INSERT INTO votes
-          SET postId=${vote.postId}, userId=${vote.userId}, vote=${vote.vote} ON DUPLICATE KEY UPDATE vote=${vote.vote};
-          `), function(err, results) {
-            if (err) {
-              callback(err);
-            }
-            else {
-              console.log(results);
-            }
-          };
-      }
+    createOrUpdateVote: function(vote, userId, callback) {
+      var valueOfVote = vote.vote;
+      var postId = vote.postId;
+      conn.query(`
+        INSERT INTO votes
+        SET postId=${postId}, userId=${userId}, vote=${valueOfVote} ON DUPLICATE KEY UPDATE vote=${valueOfVote};`,
+        function(err, results) {
+          if (err) {
+            callback(err);
+          }
+          else {
+            callback(null, 'vote completed');
+          }
+        }
+      );  
     },
 /*This checkLogin function queries the database to verify if the input (username and password) matches.
 As the password is hashed, we have to use bcrypt.compare function. 
