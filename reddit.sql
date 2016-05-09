@@ -94,4 +94,25 @@ CREATE TABLE `sessions` (
 );
 ALTER TABLE `sessions` ADD FOREIGN KEY (userId) REFERENCES `users`(`id`);
 
+--To calculate the controversial rannking
+numUpvotes < numDownvotes ? totalVotes * (numUpvotes / numDownvotes) : totalVotes * (numDownvotes / numUpvotes)
+if(SUM(if(v.vote > 0, 1, 0)) < SUM(if(v.vote < 0, -1, 0)), SUM(v.vote) * (SUM(if(v.vote > 0, 1, 0)) / SUM(if(v.vote < 0, -1, 0))), SUM(v.vote) * (SUM(if(v.vote < 0, -1, 0)) / SUM(if(v.vote > 0, 1, 0))))
 
+numUpvotes= SUM(if(v.vote > 0, 1, 0))
+numDownvotes= SUM(if(v.vote < 0, -1, 0))
+totalVotes= SUM(v.vote)
+
+
+`SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
+u.id AS users_id, u.username AS users_username,
+if(SUM(if(v.vote > 0, 1, 0)) < SUM(if(v.vote < 0, -1, 0)), SUM(v.vote) * (SUM(if(v.vote > 0, 1, 0)) / SUM(if(v.vote < 0, -1, 0))), SUM(v.vote) * (SUM(if(v.vote < 0, -1, 0)) / SUM(if(v.vote > 0, 1, 0)))) AS controversialScore
+FROM posts p
+JOIN users u ON p.userId=u.id
+LEFT JOIN votes v ON v.postId=p.id
+GROUP BY p.id
+ORDER BY controversialScore DESC
+LIMIT 25`;
+          
+
+
+if(SUM(if(v.vote > 0, 1, 0)) AS upvotes)          

@@ -71,8 +71,9 @@ module.exports = function RedditAPI(conn) {
         callback(new Error('You need to specify the title and/or the url'))
       }
       else {
+        var url = post.url.toLowerCase();
         conn.query(
-          'INSERT INTO `posts` (`userId`, `title`, `url`, `createdAt`) VALUES (?, ?, ?, ?)', [userId, post.title, post.url, null],
+          'INSERT INTO `posts` (`userId`, `title`, `url`, `createdAt`) VALUES (?, ?, ?, ?)', [userId, post.title, url, null],
           function(err, result) {
             if (err) {
               callback(err);
@@ -111,8 +112,8 @@ module.exports = function RedditAPI(conn) {
       
         conn.query(`
           SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
-                  u.id AS users_id, u.username AS users_username,
-                  SUM(if(v.vote > 0, 1, 0)) AS upvotes, SUM(if(v.vote < 0, -1, 0)) AS downvotes, SUM(v.vote) AS voteScore
+                u.id AS users_id, u.username AS users_username,
+                SUM(if(v.vote > 0, 1, 0)) AS upvotes, SUM(if(v.vote < 0, -1, 0)) AS downvotes, SUM(v.vote) AS voteScore
           FROM posts p
           JOIN users u ON p.userId=u.id
           LEFT JOIN votes v ON v.postId=p.id
@@ -131,6 +132,7 @@ module.exports = function RedditAPI(conn) {
         );
       }
       /*
+      Top ranking: = voteScore
       With sortingMethod equal to top, we join the posts table and the vote tables.
       This way,we create a new column called voteScore that is the SUM of all the votes. 
       By ordering the select post by the value of this voteScore column descending, we obtain the "top" posts first.
@@ -157,11 +159,12 @@ module.exports = function RedditAPI(conn) {
           }
         );
       }
+      //Hotness ranking: = voteScore / (amount of time the post has been online)
       else if (sortingMethod === 'hot') {
         conn.query(`
           SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
           u.id AS users_id, u.username AS users_username,
-          SUM(v.vote), 
+          SUM(v.vote) AS voteScore, 
           SUM(v.vote) / TIMEDIFF(NOW(),p.createdAt) AS hotnessScore    
           FROM posts p
           JOIN votes v ON v.postId=p.id 
@@ -180,10 +183,29 @@ module.exports = function RedditAPI(conn) {
           }
         );
       }
+      //Controversial ranking: = numUpvotes < numDownvotes ? totalVotes * (numUpvotes / numDownvotes) : totalVotes * (numDownvotes / numUpvotes)
       else if (sortingMethod === 'controversial'){
-      /*Controversial ranking: = numUpvotes < numDownvotes ? totalVotes * (numUpvotes / numDownvotes) : totalVotes * (numDownvotes / numUpvotes) 
-      we can filter out posts that have few votes (< 100) since they may not be meaningful.
-      */
+        conn.query(`
+        SELECT p.id AS post_id, p.title AS post_title, p.url AS post_url, p.userId AS post_userId, p.createdAt AS post_createdAt, p.updatedAt AS post_updated, p.subredditId AS post_subredditId,
+        u.id AS users_id, u.username AS users_username,
+        SUM(v.vote) AS voteScore,
+        if(SUM(if(v.vote > 0, 1, 0)) < SUM(if(v.vote < 0, -1, 0)), SUM(v.vote) * (SUM(if(v.vote > 0, 1, 0)) / SUM(if(v.vote < 0, -1, 0))), SUM(v.vote) * (SUM(if(v.vote < 0, -1, 0)) / SUM(if(v.vote > 0, 1, 0)))) AS controversialScore
+        FROM posts p
+        JOIN users u ON p.userId=u.id
+        LEFT JOIN votes v ON v.postId=p.id
+        GROUP BY p.id
+        ORDER BY controversialScore DESC
+        LIMIT 25
+        `,  
+        function(err, results){
+          if(err){
+            callback(err);
+          }
+          else{
+            callback(null, results);
+          }
+        }
+        );     
       }
     },
     getAllPostsForUser: function(userId, options, callback) {

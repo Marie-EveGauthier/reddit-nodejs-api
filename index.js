@@ -31,7 +31,7 @@ moment().format();
 
 
 //load the cookie-parser library and configure express to use it as middleware. 
-/*this middleware will add a `cookies` property to the request, 
+/*this middleware will allow to add a `cookies` property to the request, 
 an object of key:value pairs for all the cookies we set
 */
 var cookieParser = require('cookie-parser');
@@ -79,7 +79,6 @@ app.get('/', function(request, response){
     else {
       var listedPost = posts.map(function(post) {
         var score = post.voteScore;
-        console.log(post)
         var timeSinceCreated = moment(post.post_createdAt).fromNow();
         return  `<li>
         <a href='/posts/${post.post_id}'>${post.post_title}</a>
@@ -98,12 +97,8 @@ app.get('/', function(request, response){
         </form>
       </li>`
       }); 
-      response.send(`<div id='contents'>
-        <h1>Welcome on reddit</h1>
-        <ul class='contents-list'>
-          ${listedPost.join('')}
-        </ul>
-        </div>
+      response.send(`
+      <div id='header'>
         <div id='signup-log'>
           <form method='get' action='signup'>
             <button id='signup' type=submit>Sign up</button>
@@ -111,7 +106,21 @@ app.get('/', function(request, response){
           <form method='get' action='login'>
             <button id='login' type=submit>Login</button>
           </form>
-        </div>`);
+        </div>
+        <div id='sortingMethod'>
+          <ul id='sortingMethod'>
+            <li><a href='https://reddit-nodejs-api-marie-evegauthier.c9users.io/'>new</a></li>
+            <li><a href='https://reddit-nodejs-api-marie-evegauthier.c9users.io/?sort=top'>top</a></li>
+            <li><a href='https://reddit-nodejs-api-marie-evegauthier.c9users.io/?sort=hot'>hot</a></li>
+            <li><a href='https://reddit-nodejs-api-marie-evegauthier.c9users.io/?sort=controversial'>controversial</a></li>
+          </ul>  
+        </div>
+      </div>  
+      <div id='contents'>
+        <h1>Welcome to reddit-clone</h1>
+        <ul class='contents-list'> ${listedPost.join('')} </ul>
+      </div>
+      `);
     }  
   });
 });
@@ -134,7 +143,6 @@ app.post('/vote', function(request, response){
 app.get('/createPostPage', function(request, response) {
   response.sendFile(path.join(__dirname + '/html/postPageForm.html'), function(err){
     if (err) {
-      console.log(err);
       response.status(err.status).end();
     }
     else {
@@ -173,9 +181,13 @@ app.post('/createPostPage', function(request, response){
 app.get('/posts/:ID', function(request, response){
   redditAPI.getSinglePost(request.params.ID, function(err, posts){
     if (err) {
-      response.status(500).send('Ooops... something went wrong. Try again later--post/:ID');
+      response.status(500).send('Ooops... something went wrong. Try again later--posts/:ID');
     }
     else {
+      console.log(posts);
+      if(posts.url.substring(0,4) !== 'http'){
+        posts.url = 'http://' + posts.url;
+      }
       response.send(`<div id="postPage">
       <a href="${posts.url}"><h1>${posts.title}</h1></a>
       <p>Created by ${posts.username}</p>
@@ -219,7 +231,7 @@ app.post('/signup', function(request, response){
   }
 });
 
-//---------------This it the login page
+//---------------This is the login page
 app.get('/login', function(request, response){
   response.sendFile(path.join(__dirname + '/html/loginForm.html'), function(err){
     if (err) {
