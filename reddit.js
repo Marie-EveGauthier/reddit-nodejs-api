@@ -478,18 +478,18 @@ Otherwise, It will return true because the data matches. So, the function callba
         }
         else{
             if (result.length === 0) {
-              callback(new Error('username or password incorrect')); // in this case the user doesn't exist
+              callback(new Error('username or password incorrect --username')); // in this case the user doesn't exist
             }
             else {
-            var user= result[0];
-            var actualHashedPassword = user.password;
+            var userExisting= result[0];
+            var actualHashedPassword = userExisting.password;
             //
             bcrypt.compare(password, actualHashedPassword, function(err, result) {
               if(result === true) { // let's be extra safe here
-                callback(null, user);
+                callback(null, userExisting);
               }
               else {
-                callback(new Error('username or password incorrect')); // in this case the password is wrong, but we reply with the same error
+                callback(new Error('username or password incorrect --password')); // in this case the password is wrong, but we reply with the same error
               }
             });
           }

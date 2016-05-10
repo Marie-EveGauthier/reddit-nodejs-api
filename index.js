@@ -25,9 +25,6 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 //load the path library
 var path = require('path');
 
-//load the moment library to can play with the date and hours
-var moment = require('moment');
-moment().format();
 
 
 //load the cookie-parser library and configure express to use it as middleware. 
@@ -37,6 +34,8 @@ an object of key:value pairs for all the cookies we set
 var cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
+//import all the render - html functions
+var toHtml = require("./html");
 
 /*This function checks the request cookies for a cookie called SESSION
 If it doesn't exist, call next() to exit the middleware
@@ -49,7 +48,7 @@ function checkLoginToken(request, response, next) {
   if(request.cookies.SESSION) {
     redditAPI.getUserFromSession(request.cookies.SESSION, function(err, user) {
       if (user) {
-        request.loggedInUser = user[0].userId;
+        request.loggedInUser = user[0];
       }
       next();
     });
@@ -61,81 +60,51 @@ function checkLoginToken(request, response, next) {
 }  
 
 // Adding the middleware to our express stack
-app.use(checkLoginToken)
+app.use(checkLoginToken);
 
 
 
 
 /*-------------This is the homepage. 
 It lists up to 25 posts, by default sorted by the newest.
-The homepage resource can take a query string parameter called sort that can have the following values: new, top, hot
+The homepage resource can take a query string parameter called sort that can have the following values: new, top, hot, controversial
 */
 app.get('/', function(request, response){
-  
+  var cookie = request.cookies;
+  var query = request.query.message
   redditAPI.getAllPosts(request.query.sort, function(err, posts){
     if (err) {
         response.status(500).send('Ooops... something went wrong. Try again later');
     }
     else {
-      var listedPost = posts.map(function(post) {
-        var score = post.voteScore;
-        var timeSinceCreated = moment(post.post_createdAt).fromNow();
-        return  `<li>
-        <a href='/posts/${post.post_id}'>${post.post_title}</a>
-        <p>Created by ${post.users_username}</p>
-        <p>${timeSinceCreated}</p>
-        <form action='/vote' method='post'>
-          <input type='hidden' name='vote' value='1'>
-          <input type='hidden' name='postId' value='${post.post_id}'>
-          <button type='submit'>upvote this</button>
-        </form>
-        <p>${!score ? 0 : score}</p>
-        <form action='/vote' method='post'>
-          <input type='hidden' name='vote' value='-1'>
-          <input type='hidden' name='postId' value='${post.post_id}'>
-          <button type='submit'>downvote this</button>
-        </form>
-      </li>`
-      }); 
-      response.send(`
-      <div id='header'>
-        <div id='signup-log'>
-          <form method='get' action='signup'>
-            <button id='signup' type=submit>Sign up</button>
-          </form>
-          <form method='get' action='login'>
-            <button id='login' type=submit>Login</button>
-          </form>
-        </div>
-        <div id='sortingMethod'>
-          <ul id='sortingMethod'>
-            <li><a href='https://reddit-nodejs-api-marie-evegauthier.c9users.io/'>new</a></li>
-            <li><a href='https://reddit-nodejs-api-marie-evegauthier.c9users.io/?sort=top'>top</a></li>
-            <li><a href='https://reddit-nodejs-api-marie-evegauthier.c9users.io/?sort=hot'>hot</a></li>
-            <li><a href='https://reddit-nodejs-api-marie-evegauthier.c9users.io/?sort=controversial'>controversial</a></li>
-          </ul>  
-        </div>
-      </div>  
-      <div id='contents'>
-        <h1>Welcome to reddit-clone</h1>
-        <ul class='contents-list'> ${listedPost.join('')} </ul>
-      </div>
-      `);
-    }  
+      if(!query){
+        response.send(toHtml.renderLayout('homepage', request.loggedInUser, toHtml.renderHomepage(posts), cookie.username));
+      }
+      else{
+//'homepage' = pageTitle, request.loggedInUser = isLoggedIn, toHtml.homepage(posts) = content
+      response.send(toHtml.renderLayout('homepage', request.loggedInUser, toHtml.renderHomepage(posts, query), cookie.username)); 
+      }
+    }
   });
 });
+  
 
 //------This receive the vote and calling the redditAPI.createOrUpdatedVote function passes the data for the database
 app.post('/vote', function(request, response){
-  redditAPI.createOrUpdateVote(request.body, request.loggedInUser, function(err, result){
-    if (err) {
+  if(!request.loggedInUser){
+      response.status(401).send('You must be logged in to vote! <a href="https://reddit-nodejs-api-marie-evegauthier.c9users.io/login">log in</a>');
+  }
+  else {
+    redditAPI.createOrUpdateVote(request.body, request.loggedInUser.userId, function(err, result){
+      if(err) {
         response.status(500).send('Ooops... something went wrong. Try again later');
       }
-      else {
-        //This will redirect the user where he comes from 
-        response.redirect(`back`);  
-      }  
-  });
+//This will redirect the user where he comes from with the query = thanks
+      else{
+      response.redirect(`/?message=thanks`); 
+      }
+    });  
+  }
 });
 
 
@@ -156,16 +125,16 @@ app.get('/createPostPage', function(request, response) {
 
 app.post('/createPostPage', function(request, response){
 // before creating content, check if the user is logged in
-  if (!request.loggedInUser) {
+  if (!request.loggedInUser.userId) {
     // HTTP status code 401 means Unauthorized
-    response.status(401).send('You must be logged in to create content! <a href="https://reddit-nodejs-api-marie-evegauthier.c9users.io/login">');
+    response.status(401).send('You must be logged in to create content! <a href="https://reddit-nodejs-api-marie-evegauthier.c9users.io/login">log in</a>');
   }
   else {
-    // here we have a logged in user, let's create the post!
+    // here we have a logged user, let's create the post!
     //--the request.body is an objet like this {url: xxxx, title: xxxxx}
     //the request.loggedInUser is the userId
 
-    redditAPI.createPost(request.body, request.loggedInUser, function(err, post){
+    redditAPI.createPost(request.body, request.loggedInUser.userId, function(err, post){
       if (err) {
         response.status(500).send(err.message);
       }
@@ -184,7 +153,6 @@ app.get('/posts/:ID', function(request, response){
       response.status(500).send('Ooops... something went wrong. Try again later--posts/:ID');
     }
     else {
-      console.log(posts);
       if(posts.url.substring(0,4) !== 'http'){
         posts.url = 'http://' + posts.url;
       }
@@ -200,16 +168,9 @@ app.get('/posts/:ID', function(request, response){
 
 //---------------This is the signup page
 app.get('/signup', function(request, response){
-  response.sendFile(path.join(__dirname + '/html/signupForm.html'), function(err){
-    if (err) {
-      console.log(err);
-      response.status(err.status).end();
-    }
-    else {
-      console.log('Sent:', (path.join(__dirname + 'html/signupForm.html')));
-    }
-  });
+  response.send(toHtml.renderSignupForm());
 });
+
 //Receiving data from our signup page
 //We grab POST parameters using req.body.variable_name to insert the data of this new user in the database 
 app.post('/signup', function(request, response){
@@ -224,24 +185,25 @@ app.post('/signup', function(request, response){
         response.send(err.message);
       }
       else {
-      //This will redirect the user to the login page 
-        response.redirect(`/login`);  
+      //This will add the cookie to allow the server to reconize the user  
+        redditAPI.createSession(user.id, function(err, token){
+          if (err) {
+            response.status(500).send('An error occurred. Please try again later!');
+          }
+          else {
+            response.cookie('SESSION', token); // the secret token is now in the user's cookies!
+            response.cookie('username', username);
+            response.redirect('/');
+          }
+        });
       }
-    });  
-  }
-});
+    });
+  } 
+}); 
 
 //---------------This is the login page
 app.get('/login', function(request, response){
-  response.sendFile(path.join(__dirname + '/html/loginForm.html'), function(err){
-    if (err) {
-      console.log(err);
-      response.status(err.status).end();
-    }
-    else{
-      console.log('Sent:', (path.join(__dirname + 'html/loginForm.html')));
-    }
-  });
+  response.send(toHtml.renderLoginForm());
 });
 //Receiving data from our login page
 //We grab POST parameters using req.body.variable_name to login the user 
@@ -267,6 +229,7 @@ app.post(`/login`, function(request, response){
           }
           else {
             response.cookie('SESSION', token); // the secret token is now in the user's cookies!
+            response.cookie('username', username);
             response.redirect('/');
           }
         });
@@ -274,6 +237,12 @@ app.post(`/login`, function(request, response){
     });
   }
 });
+
+app.get('/logout', function(request, response) {
+    response.clearCookie('SESSION');
+    response.clearCookie('username');
+    response.redirect('/');
+})
 
 //This allows the web server to listen the requests
 app.listen(process.env.PORT);
