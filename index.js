@@ -109,23 +109,16 @@ app.post('/vote', function(request, response){
 
 
 //---------------This is the create post page
-app.get('/createPostPage', function(request, response) {
-  response.sendFile(path.join(__dirname + '/html/postPageForm.html'), function(err){
-    if (err) {
-      response.status(err.status).end();
-    }
-    else {
-      console.log('Sent:', (path.join(__dirname + '/html/postPageForm.html')));
-    }
-  });
+app.get('/createPost', function(request, response) {
+  response.send(toHtml.createPost());
 });
     
 //Receiving data from our postPageform
 //We grab POST parameters using req.body.variable_name to insert the data of this new post in the database 
 
-app.post('/createPostPage', function(request, response){
+app.post('/createPost', function(request, response){
 // before creating content, check if the user is logged in
-  if (!request.loggedInUser.userId) {
+  if (!request.loggedInUser) {
     // HTTP status code 401 means Unauthorized
     response.status(401).send('You must be logged in to create content! <a href="https://reddit-nodejs-api-marie-evegauthier.c9users.io/login">log in</a>');
   }
@@ -148,19 +141,15 @@ app.post('/createPostPage', function(request, response){
 
 //------------------------This shows the post according to the id given as parameter in the url
 app.get('/posts/:ID', function(request, response){
-  redditAPI.getSinglePost(request.params.ID, function(err, posts){
+  redditAPI.getSinglePost(request.params.ID, function(err, post){
     if (err) {
       response.status(500).send('Ooops... something went wrong. Try again later--posts/:ID');
     }
     else {
-      if(posts.url.substring(0,4) !== 'http'){
-        posts.url = 'http://' + posts.url;
+      if(post.url.substring(0,4) !== 'http'){
+        post.url = 'http://' + post.url;
       }
-      response.send(`<div id="postPage">
-      <a href="${posts.url}"><h1>${posts.title}</h1></a>
-      <p>Created by ${posts.username}</p>
-      <a href='/'>Back to homepage</a>
-      </div>`);
+      response.send(toHtml.renderPost(post));
     }
   });
 });
@@ -242,127 +231,8 @@ app.get('/logout', function(request, response) {
     response.clearCookie('SESSION');
     response.clearCookie('username');
     response.redirect('/');
-})
+});
 
 //This allows the web server to listen the requests
 app.listen(process.env.PORT);
 
-
-// redditAPI.createOrUpdateVote({postId: 3, userId: 1, vote: 1}, function(err, result) {
-//   if (err) {
-//   console.log(err);
-//   }
-//   else {
-//     console.log(result);
-//   }
-// });
-  
-
-
-// redditAPI.getTheFiveLatestPosts(function(err, result){
-// if (err) {
-//   console.log(err.stack);
-// }
-// else {
-//   console.log(result);
-// }
-// });
-
-// redditAPI.getCommentsForPost(2, function(err, result){
-// if (err) {
-//   console.log(err.stack);
-// }
-// else {
-//   console.log(result);
-// }
-// });
-
-
-// redditAPI.createComment({
-//   text: 'third level comment',
-//   userId: 1,
-//   postId: 2,
-//   parentId: 14
-// }, function (err, result){
-//   if (err) {
-//       console.log(err);
-//     }
-//     else {
-//       console.log(result);
-//     }  
-//   });
-  
-
-// redditAPI.getAllPosts(function(err, result){
-//   if (err) {
-//       console.log(err);
-//     }
-//     else {
-//       console.log(result);
-//     }  
-//   });
-  
-
-// redditAPI.createPost({
-//   title: 'Why obsolescence programmee',
-//   url: 'https://whyopencomputing.ch/fr/',
-//   userId: 1, 
-//   subredditId: 1
-//   }, function(err, post) {
-//   if (err) {
-//     console.log(err);
-//   }
-//   else {
-//     console.log(post);
-//   }
-// });
-
-  // redditAPI.getAllSubreddits(function(err, result) {
-  //   if (err) {
-  //     console.log(err);
-  //   }
-  //   else {
-  //     console.log(result);
-  //   }  
-  // });
-
-    // redditAPI.createSubreddit({'name': 'may' }, function(err, result){
-    //   if (err) {
-    //         console.log(err);
-    //       }
-    //       else {
-    //         console.log(result);
-    //       }
-    // });
-
-// redditAPI.getAllPostsForUser(1, function(err, result){
-//   if (err) {
-//         console.log(err);
-//       }
-//       else {
-//         console.log(result);
-//       }
-// });
-// // It's request time!
-// redditAPI.createUser({
-//   username: 'martin',
-//   password: 'poiu'
-// }, function(err, user) {
-//   if (err) {
-//     console.log(err);
-//   }
-//   else {
-//     redditAPI.createPost({
-//       title: 'Start with why',
-//       url: 'https://www.startwithwhy.com/',
-//       userId: user.id
-//     }, function(err, post) {
-//       if (err) {
-//         console.log(err);
-//       }
-//       else {
-//         console.log(post);
-//       }
-//     });
-//   }
-// });

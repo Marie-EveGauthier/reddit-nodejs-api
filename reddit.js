@@ -450,6 +450,7 @@ module.exports = function RedditAPI(conn) {
     Otherwise it should reject the request.
 */
     createOrUpdateVote: function(vote, userId, callback) {
+      console.log(vote, "vote from createOrUpdateVote line 453 reddit.js")
       var valueOfVote = vote.vote;
       var postId = vote.postId;
       conn.query(`

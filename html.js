@@ -74,13 +74,14 @@ function renderLoggedoutToolbar() {
 function renderLoggedinToolbar(user) {
     return  `<nav class='signup-log'>
                 <p>Hi ${user}!</p>
+                <a href='/createPost'>Submit a new post</a>
                 <a href='/logout'>Logout</a>
             </nav>`;
 }
 
 //This function is called when the user press the login link in the homepage. It renders the layout to log in
 function renderLoginForm() {
-    return `<h2>Log in</h2>
+    return `<h1>Log in</h1>
     <form action="/login" method="POST"> 
         <div>
             <input type="text" name="username" placeholder="Enter your username">
@@ -93,7 +94,7 @@ function renderLoginForm() {
 }
 
 function renderSignupForm() {
-    return `<h2>Create an account</h2>
+    return `<h1>Create an account</h1>
     <form action="/signup" method="POST"> 
         <div>
             <input type="text" name="username" placeholder="Enter your username">
@@ -105,11 +106,35 @@ function renderSignupForm() {
     </form>`;
 }
 
+function renderPost(post) {
+    return `<article>
+      <a href="${post.url}"><h1>${post.title}</h1></a>
+      <p>Created by ${post.username}</p>
+      <a href='/'>Back to homepage</a>
+      <article>`;
+}
+
+function createPost() {
+    return `<h1>Share with reddit-clone!</hi>
+    <form action="/createPost" method="POST"> 
+        <div>
+            <input type="text" name="url" placeholder="Enter a URL to your post">
+        </div>
+        <div>
+            <input type="text" name="title" placeholder="Enter the title of your post">
+        </div>
+        <button type="submit">Share your post!</button>
+    </form>`;
+}
+
+
 module.exports = {
   renderLayout: renderLayout,
   renderHomepage: renderHomepage,
   renderLoggedoutToolbar: renderLoggedoutToolbar,
   renderLoggedinToolbar: renderLoggedinToolbar,
   renderLoginForm: renderLoginForm,
-  renderSignupForm: renderSignupForm
+  renderSignupForm: renderSignupForm,
+  renderPost: renderPost,
+  createPost: createPost
 };
