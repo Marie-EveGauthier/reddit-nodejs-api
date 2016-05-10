@@ -2,18 +2,22 @@
 var moment = require('moment');
 moment().format();
 
+
+
 //---------- This is the function to render the html
-function renderLayout(pageTitle, isLoggedIn, content, username) {
+function renderLayout(pageTitle, isLoggedIn, content, username, isCreatePage, isSignup, isLogin, isHomepage) {
 
     var html = `
     <!doctype>
     <html>
         <head>
             <title>${pageTitle}</title>
+            <link rel='stylesheet' href='css/style.css'>
+
         </head>
         <body>
             <header>
-                ${isLoggedIn ? renderLoggedinToolbar(username) : renderLoggedoutToolbar()}
+                ${isLoggedIn ? renderLoggedinToolbar(username, isCreatePage, isHomepage) : renderLoggedoutToolbar(isSignup, isLogin, isHomepage)}
             </header>    
             <main>${content}
             </main> 
@@ -63,34 +67,48 @@ function renderHomepage(posts, query){
 }
 
 //This is the function to render the header if the user is loggedout. It is called inside the renderLayout function
-function renderLoggedoutToolbar() {
+function renderLoggedoutToolbar(isSignup, isLogin, isHomepage) {
     return `<nav class='signup-log'>
-                <a href='/signup'>Sign up</a>
-                <a href='/login'>Login</a>
+                ${isSignup ? '' : '<a href="/signup">Sign up</a>'}
+                ${isLogin ? '' : '<a href="/login">Login</a>'}
+                ${isHomepage ? '' : '<a href="/">Back to homepage</a>'}
             </nav>`;
 }
 
 //This is the function to render the header if the user is logged. It is called inside the renderLayout function
-function renderLoggedinToolbar(user) {
+function renderLoggedinToolbar(user, isCreatePage, isHomepage) {
     return  `<nav class='signup-log'>
                 <p>Hi ${user}!</p>
-                <a href='/createPost'>Submit a new post</a>
+                ${isCreatePage ? '' : '<a href="/createPost">Submit a new post</a>'}
                 <a href='/logout'>Logout</a>
+                ${isHomepage ? '' : '<a href="/">Back to homepage</a>'}
             </nav>`;
 }
 
 //This function is called when the user press the login link in the homepage. It renders the layout to log in
 function renderLoginForm() {
-    return `<h1>Log in</h1>
-    <form action="/login" method="POST"> 
-        <div>
-            <input type="text" name="username" placeholder="Enter your username">
-        </div>
-        <div>
-            <input type="text" name="password" placeholder="Enter your password">
-        </div>
-        <button type="submit">Login</button>
-    </form>`;
+    return `<!doctype>
+    <html>
+        <head>
+            <title>Log in</title>
+            <link rel='stylesheet' href='css/style.css'>
+        </head>
+        <body>
+            <main>
+                <h1>Log in</h1>
+                
+                <form action="/login" method="POST"> 
+                    <div>
+                        <input type="text" name="username" placeholder="Enter your username">
+                    </div>
+                    <div>
+                        <input type="text" name="password" placeholder="Enter your password">
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+            </main>    
+        </body>
+    </html>`;
 }
 
 function renderSignupForm() {
@@ -110,7 +128,6 @@ function renderPost(post) {
     return `<article>
       <a href="${post.url}"><h1>${post.title}</h1></a>
       <p>Created by ${post.username}</p>
-      <a href='/'>Back to homepage</a>
       <article>`;
 }
 

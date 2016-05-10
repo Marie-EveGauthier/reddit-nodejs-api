@@ -22,10 +22,8 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
-//load the path library
-var path = require('path');
-
-
+//import all the render - html functions
+var toHtml = require("./html");
 
 //load the cookie-parser library and configure express to use it as middleware. 
 /*this middleware will allow to add a `cookies` property to the request, 
@@ -34,8 +32,9 @@ an object of key:value pairs for all the cookies we set
 var cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
-//import all the render - html functions
-var toHtml = require("./html");
+
+//load the middleware to serving static files in Express - and in this case the css/style.css
+app.use(express.static('css'));
 
 /*This function checks the request cookies for a cookie called SESSION
 If it doesn't exist, call next() to exit the middleware
@@ -78,11 +77,11 @@ app.get('/', function(request, response){
     }
     else {
       if(!query){
-        response.send(toHtml.renderLayout('homepage', request.loggedInUser, toHtml.renderHomepage(posts), cookie.username));
+        response.send(toHtml.renderLayout('homepage', request.loggedInUser, toHtml.renderHomepage(posts), cookie.username, false, false, false, true));
       }
       else{
-//'homepage' = pageTitle, request.loggedInUser = isLoggedIn, toHtml.homepage(posts) = content
-      response.send(toHtml.renderLayout('homepage', request.loggedInUser, toHtml.renderHomepage(posts, query), cookie.username)); 
+//'homepage' = pageTitle, request.loggedInUser = isLoggedIn, toHtml.homepage(posts) = content, isCreatePage, isSignup, isLogin
+      response.send(toHtml.renderLayout('homepage', request.loggedInUser, toHtml.renderHomepage(posts, query), cookie.username, false, false, false, true)); 
       }
     }
   });
@@ -110,7 +109,9 @@ app.post('/vote', function(request, response){
 
 //---------------This is the create post page
 app.get('/createPost', function(request, response) {
-  response.send(toHtml.createPost());
+  var cookie = request.cookies;
+  //'homepage' = pageTitle, request.loggedInUser = isLoggedIn, toHtml.homepage(posts) = content, isCreatePage, isSignup, isLogin, isHomepage
+  response.send(toHtml.renderLayout('createPost', request.loggedInUser, toHtml.createPost(), cookie.username, true, false, false, false)); 
 });
     
 //Receiving data from our postPageform
@@ -141,6 +142,7 @@ app.post('/createPost', function(request, response){
 
 //------------------------This shows the post according to the id given as parameter in the url
 app.get('/posts/:ID', function(request, response){
+  var cookie = request.cookies;
   redditAPI.getSinglePost(request.params.ID, function(err, post){
     if (err) {
       response.status(500).send('Ooops... something went wrong. Try again later--posts/:ID');
@@ -149,7 +151,8 @@ app.get('/posts/:ID', function(request, response){
       if(post.url.substring(0,4) !== 'http'){
         post.url = 'http://' + post.url;
       }
-      response.send(toHtml.renderPost(post));
+//'homepage' = pageTitle, request.loggedInUser = isLoggedIn, toHtml.homepage(posts) = content, isCreatePage, isSignup, isLogin, isHomepage
+  response.send(toHtml.renderLayout('post/request.params.ID', request.loggedInUser, toHtml.renderPost(), cookie.username, false, false, false, false)); 
     }
   });
 });
@@ -157,7 +160,9 @@ app.get('/posts/:ID', function(request, response){
 
 //---------------This is the signup page
 app.get('/signup', function(request, response){
-  response.send(toHtml.renderSignupForm());
+  var cookie = request.cookies;
+  //'homepage' = pageTitle, request.loggedInUser = isLoggedIn, toHtml.homepage(posts) = content, isCreatePage, isSignup, isLogin, isHomepage
+  response.send(toHtml.renderLayout('signup', request.loggedInUser, toHtml.renderSignupForm(), cookie.username, false, true, false, false)); 
 });
 
 //Receiving data from our signup page
@@ -192,8 +197,11 @@ app.post('/signup', function(request, response){
 
 //---------------This is the login page
 app.get('/login', function(request, response){
-  response.send(toHtml.renderLoginForm());
+  var cookie = request.cookies;
+  //'homepage' = pageTitle, request.loggedInUser = isLoggedIn, toHtml.homepage(posts) = content, isCreatePage, isSignup, isLogin, isHomepage
+  response.send(toHtml.renderLayout('login', request.loggedInUser, toHtml.renderLoginForm(), cookie.username, false, false, true, false)); 
 });
+
 //Receiving data from our login page
 //We grab POST parameters using req.body.variable_name to login the user 
 /*Calling the redditAPI.checkLogin, we verify if the password matches with the username, 
