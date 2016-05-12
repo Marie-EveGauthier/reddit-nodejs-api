@@ -1,3 +1,5 @@
+//thumbs up and thumbs down by Antistatique from the Noun Project
+
 //load the moment library to can play with the date and hours
 var moment = require('moment');
 moment().format();
@@ -12,8 +14,8 @@ function renderLayout(pageTitle, isLoggedIn, content, username, isCreatePage, is
     <html>
         <head>
             <title>${pageTitle}</title>
-            <link rel='stylesheet' href='css/style.css'>
-
+            <link rel='stylesheet' type='text/css' href='../css/style.css'>
+            <link href='https://fonts.googleapis.com/css?family=Lora:400,700' rel='stylesheet' type='text/css'>
         </head>
         <body>
             <header>
@@ -21,8 +23,9 @@ function renderLayout(pageTitle, isLoggedIn, content, username, isCreatePage, is
             </header>    
             <main>${content}
             </main> 
-            <footer>&copy; 2016 Marie-Eve Gauthier
-            </footer> 
+            <footer>&copy; 2016 Marie-Eve Gauthier</footer> 
+            <script src="https://code.jquery.com/jquery-1.12.3.js"></script>
+            <script src='./script.js'></script>  
         </body>
     </html>`;
     return html;
@@ -34,25 +37,29 @@ function renderHomepage(posts, query){
         var score = post.voteScore;
         var timeSinceCreated = moment(post.post_createdAt).fromNow();
         return  `<li>
-        <a href='/posts/${post.post_id}'>${post.post_title}</a>
-        <p>Created by ${post.users_username}</p>
-        <p>${timeSinceCreated}</p>
-        <form action='/vote' method='post'>
-          <input type='hidden' name='vote' value='1'>
-          <input type='hidden' name='postId' value='${post.post_id}'>
-          <button type='submit'>upvote this</button>
-        </form>
-        <p>${!score ? 0 : score}</p>
-        <form action='/vote' method='post'>
-          <input type='hidden' name='vote' value='-1'>
-          <input type='hidden' name='postId' value='${post.post_id}'>
-          <button type='submit'>downvote this</button>
-        </form>
+            <article class='post'>
+                <a href='/posts/${post.post_id}'>${post.post_title}</a>
+                <p>Created by ${post.users_username}</p>
+                <p>${timeSinceCreated}</p>
+            </article>
+            <aside class='vote'>
+                <p id='message${post.post_id}'></p>
+                <form action='/vote' method='post' class='upvote'>
+                  <input type='hidden' name='vote' value='1'>
+                  <input type='hidden' name='postId' value='${post.post_id}'>
+                  <button class='button__upvote' type='submit'alt='upvote'></button>
+                </form>
+                <p id='vote${post.post_id}'>${!score ? 0 : score}</p>
+                <form action='/vote' method='post' class='downvote'>
+                  <input type='hidden' name='vote' value='-1'>
+                  <input type='hidden' name='postId' value='${post.post_id}'>
+                  <button class='button__downvote' type='submit' alt='downvote'></button>
+                </form>
+            </aside>    
         </li>`;
     });
     var html = `
     <h1>Welcome to reddit-clone</h1>
-    <h3>${query ? 'Thank you for voting!' : ''}</h3>
     <nav class='sortingMethod'>
         <ul>
             <li><a href='https://reddit-nodejs-api-marie-evegauthier.c9users.io/'>new</a></li>
@@ -61,6 +68,7 @@ function renderHomepage(posts, query){
             <li><a href='https://reddit-nodejs-api-marie-evegauthier.c9users.io/?sort=controversial'>controversial</a></li>
         </ul> 
     </nav> 
+    <h3>${query ? 'Thank you for voting!' : ''}</h3>
     <ul class='contents-list'>${listedPost.join('')}</ul>
     `;
     return html;
@@ -87,28 +95,16 @@ function renderLoggedinToolbar(user, isCreatePage, isHomepage) {
 
 //This function is called when the user press the login link in the homepage. It renders the layout to log in
 function renderLoginForm() {
-    return `<!doctype>
-    <html>
-        <head>
-            <title>Log in</title>
-            <link rel='stylesheet' href='css/style.css'>
-        </head>
-        <body>
-            <main>
-                <h1>Log in</h1>
-                
-                <form action="/login" method="POST"> 
-                    <div>
-                        <input type="text" name="username" placeholder="Enter your username">
-                    </div>
-                    <div>
-                        <input type="text" name="password" placeholder="Enter your password">
-                    </div>
-                    <button type="submit">Login</button>
-                </form>
-            </main>    
-        </body>
-    </html>`;
+    return `<h1>Log in</h1>
+        <form action="/login" method="POST"> 
+            <div>
+                <input type="text" name="username" placeholder="Enter your username">
+            </div>
+            <div>
+                <input type="text" name="password" placeholder="Enter your password">
+            </div>
+            <button type="submit">Login</button>
+        </form>`;
 }
 
 function renderSignupForm() {
@@ -132,7 +128,7 @@ function renderPost(post) {
 }
 
 function createPost() {
-    return `<h1>Share with reddit-clone!</hi>
+    return `<h1>Share with reddit-clone!</h1>
     <form action="/createPost" method="POST"> 
         <div>
             <input type="text" name="url" placeholder="Enter a URL to your post">

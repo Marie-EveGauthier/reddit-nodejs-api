@@ -75,6 +75,7 @@ module.exports = function RedditAPI(conn) {
         conn.query(
           'INSERT INTO `posts` (`userId`, `title`, `url`, `createdAt`) VALUES (?, ?, ?, ?)', [userId, post.title, url, null],
           function(err, result) {
+            console.log(result, "from result callback de createPost reddit.js line 78");
             if (err) {
               callback(err);
             }
@@ -450,18 +451,30 @@ module.exports = function RedditAPI(conn) {
     Otherwise it should reject the request.
 */
     createOrUpdateVote: function(vote, userId, callback) {
-      console.log(vote, "vote from createOrUpdateVote line 453 reddit.js")
+      console.log(vote, 'vote from ceateOrUpdateVtote line 454 reddit.js');
+      console.log(userId, 'userID from ceateOrUpdateVtote line 454 reddit.js')
       var valueOfVote = vote.vote;
       var postId = vote.postId;
       conn.query(`
         INSERT INTO votes
-        SET postId=${postId}, userId=${userId}, vote=${valueOfVote} ON DUPLICATE KEY UPDATE vote=${valueOfVote};`,
+        SET postId=${postId}, userId=${userId}, vote=${valueOfVote}, createdAt=null ON DUPLICATE KEY UPDATE vote=${valueOfVote};`,
         function(err, results) {
+          console.log(results, "results from line 459 reddit.js");
           if (err) {
             callback(err);
           }
           else {
-            callback(null, 'vote completed');
+            console.log("line 467");
+            conn.query(`SELECT SUM(votes.vote) AS voteScore FROM votes WHERE postId = ?`, [postId],
+            function(err, result) {
+              console.log(result, "from result select database score reddit.js line 467");
+              if (err) {
+                callback(err);
+              }
+              else {
+                callback(null, result[0].voteScore);
+              }
+            });
           }
         }
       );  

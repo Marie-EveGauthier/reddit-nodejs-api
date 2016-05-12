@@ -33,8 +33,10 @@ var cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
 
-//load the middleware to serving static files in Express - and in this case the css/style.css
-app.use(express.static('css'));
+//load the middleware to serving static files in Express - and in this case the public folder
+app.use(express.static('public'));
+
+
 
 /*This function checks the request cookies for a cookie called SESSION
 If it doesn't exist, call next() to exit the middleware
@@ -91,16 +93,16 @@ app.get('/', function(request, response){
 //------This receive the vote and calling the redditAPI.createOrUpdatedVote function passes the data for the database
 app.post('/vote', function(request, response){
   if(!request.loggedInUser){
-      response.status(401).send('You must be logged in to vote! <a href="https://reddit-nodejs-api-marie-evegauthier.c9users.io/login">log in</a>');
+      response.send('You must be logged in to vote!');
   }
   else {
     redditAPI.createOrUpdateVote(request.body, request.loggedInUser.userId, function(err, result){
       if(err) {
         response.status(500).send('Ooops... something went wrong. Try again later');
       }
-//This will redirect the user where he comes from with the query = thanks
+//This will send the result(voteScore) 
       else{
-      response.redirect(`/?message=thanks`); 
+        response.send({result: result});
       }
     });  
   }
@@ -152,7 +154,7 @@ app.get('/posts/:ID', function(request, response){
         post.url = 'http://' + post.url;
       }
 //'homepage' = pageTitle, request.loggedInUser = isLoggedIn, toHtml.homepage(posts) = content, isCreatePage, isSignup, isLogin, isHomepage
-  response.send(toHtml.renderLayout('post/request.params.ID', request.loggedInUser, toHtml.renderPost(), cookie.username, false, false, false, false)); 
+  response.send(toHtml.renderLayout('post/request.params.ID', request.loggedInUser, toHtml.renderPost(post), cookie.username, false, false, false, false)); 
     }
   });
 });

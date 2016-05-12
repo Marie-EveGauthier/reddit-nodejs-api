@@ -1,0 +1,285 @@
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+
+
+/* HTML5 display-role reset for older browsers */
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+    display: block;
+}
+
+body {
+    line-height: 1;
+}
+
+ol,
+ul {
+    list-style: none;
+}
+
+blockquote,
+q {
+    quotes: none;
+}
+
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
+    content: '';
+    content: none;
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+
+/*MY STYLE*/
+
+body {
+    width: 100%;
+    color: #303841;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    font-family: 'Lora', serif;
+}
+
+header {
+    flex: 1 1 100%;
+    width: 100%;
+    border: 1px solid black;
+}
+
+main {
+    flex: 2 1 100%;
+    width: 100%;
+    border: 1px solid black;
+}
+
+footer {
+    align-self: flex-end;
+    flex: 0 1 100%;
+    width: 100%;
+    text-align: center;
+    color: #3A4750;
+    padding-bottom: 0.35em;
+    padding-top: 0.35em;
+    border: 1px solid black;
+}
+
+h1 {
+    font-weight: bold;
+    font-size: 1.5em;
+    background-color: #FFC107;
+    text-align: center;
+    color: white;
+}
+
+.signup-log {
+    background-color: #FFC107;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.signup-log p {
+    font-weight: bold;
+    padding: 0.75em;
+}
+
+.signup-log a {
+    text-decoration: none;
+    display: block;
+    padding: 0.75em;
+    color: white;
+}
+
+.signup-log a:hover {
+    background-color: #FFB300;
+}
+
+.sortingMethod ul {
+    list-style: none;
+    margin: 0;
+    background-color: #FFC107;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.sortingMethod ul a {
+    text-decoration: none;
+    display: block;
+    padding: 1em;
+    color: white;
+}
+
+.sortingMethod ul a:hover {
+    background-color: #FFB300;
+}
+
+.contents-list {
+    list-style: none;
+    display: flex;
+    flex-flow: column wrap;
+    justify-content: space-around;
+    padding-left: 0px;
+}
+
+.contents-list li {
+    display: flex;
+    flex-flow: row-reverse wrap;
+    justify-content: space-around;
+    margin: 1em 1.5em;
+}
+
+.post {
+    text-align: center;
+    flex: 1.5 1 66%;
+    display: flex;
+    flex-flow: row wrap;
+    margin: 1em;
+}
+
+.post a {
+    flex: 0 1 100%;
+    text-decoration: none;
+    color: #EC407A;
+}
+
+.post a:hover {
+    color: #E91E63;
+    font-weight: bold;
+}
+
+.post p {
+    align-self: flex-end;
+    flex: 1 0 50%;
+}
+
+.vote {
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-flow: column wrap;
+    margin: 1em;
+}
+
+.button__upvote {
+    background-image: url("../css/thumb_up.png");
+    background-color: transparent;
+    background-size: cover;
+    width: 3em;
+    height: 3em;
+    border: none;
+    margin-bottom: 1em;
+}
+
+.button__downvote{
+    background-image: url("../css/thumb_down.png");
+    background-color: transparent;
+    background-size: cover;
+    width: 3em;
+    height: 3em;
+    border: none;
+    margin-top: 1em;
+}
